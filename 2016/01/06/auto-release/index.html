@@ -1,0 +1,55 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 自動化發布 · De-bug</title><meta name="description" content="CI"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="http://fonts.useso.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">自動化發布</h1><div class="post-time">Jan 6, 2016</div><div class="post-content"><p>運用 npm 上的套件來做個簡單的 CI，</p>
+<p>對自己用的小工具庫或 side project 而言，</p>
+<p>都是很爽的事情。</p>
+<a id="more"></a>
+<ul>
+<li><p>Test.</p>
+</li>
+<li><p>mocha, chai</p>
+</li>
+<li><p>先測試</p>
+</li>
+</ul>
+<ul>
+<li>Semantic release</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&gt; semainti-release-cli setup</span><br><span class="line"></span><br><span class="line">? Is the GitHub repository private? No</span><br><span class="line">? What is your npm registry? https://registry.npmjs.org/</span><br><span class="line">? What is your npm username? tjku</span><br><span class="line">? What is your npm email? abalone0204@gmail.com</span><br><span class="line">? What is your GitHub username? abalone0204</span><br><span class="line">? What CI are you using? Travis CI</span><br><span class="line">? What kind of `.travis.yml` <span class="keyword">do</span> you want? Single Node.js version.</span><br></pre></td></tr></table></figure>
+<p>接著會新增數個檔案和變更 package.json 以及新增 travis.yml</p>
+<p>package.json 中的 version 被拿掉了，</p>
+<p>如果我們要用 npm install 東西的話，</p>
+<p>這樣會噴錯。</p>
+<p>所以我們還是要手動將其加回去</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">    "version": "0.0.0-semantically-released",</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在 travis.yml 裡面設定要通過 test 才能 release 新版本</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">script:</span></span><br><span class="line"><span class="bullet">  -</span> npm run test</span><br></pre></td></tr></table></figure>
+<ul>
+<li>Conventional commit</li>
+</ul>
+<ul>
+<li><p>Automatically Releasing with TravisCI</p>
+</li>
+<li><p>Automatically running tests before commits with ghooks</p>
+</li>
+</ul>
+<ul>
+<li><p>Goal</p>
+<ul>
+<li><p>在 commit 之前先跑測試</p>
+</li>
+<li><p>在 push 前可以先 bundle</p>
+</li>
+</ul>
+</li>
+<li><p>commitizen和 ghooks的 config 推薦寫法，影片中的樣式已經舊了</p>
+</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">"config": &#123;</span><br><span class="line">    "commitizen": &#123;</span><br><span class="line">      "path": "node_modules/cz-conventional-changelog/"</span><br><span class="line">    &#125;,</span><br><span class="line">    "ghooks": &#123;</span><br><span class="line">      "pre-commit": "npm run test:single"</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="測試覆蓋率"><a href="#測試覆蓋率" class="headerlink" title="測試覆蓋率"></a>測試覆蓋率</h1><p>使用 istanbul</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"test:single"</span>: <span class="string">"istanbul cover -x *.test.js _mocha -- -R $(find test -name *.test.js)"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p><code>-x</code>是因為我們不需要去測試測試用的js</p>
+</li>
+<li><p><code>_mocha</code> 則是為搭配<code>istanbul</code>所使用的</p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/01/09/css-modules/" class="prev">PREV</a></div><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-65933410-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script></body></html>

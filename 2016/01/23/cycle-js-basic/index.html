@@ -1,0 +1,176 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 做中學 Cycle.js（上） · De-bug</title><meta name="description" content="做中學 Cycle.js（上） - Tsung-Chen Ku"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="http://fonts.useso.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">做中學 Cycle.js（上）</h1><div class="post-time">Jan 23, 2016</div><div class="post-content"><p>之前 Redux 和 Cycle.js 作者在爭辯何者才是較好的 paradigm，</p>
+<p>其實軟體開發裡面沒有銀彈，</p>
+<p>不過這種爭辯也更能夠激發出我們寫出更棒的軟體，</p>
+<p>並且去反思現行流行的東西真的是「好」的嗎？</p>
+<a id="more"></a>
+<p>Cycle.js 的作者也寫下一篇他認為為什麼 Redux + React 不那麼好的原因：</p>
+<ul>
+<li><a href="http://staltz.com/why-react-redux-is-an-inferior-paradigm.html" target="_blank" rel="external">WHY REACT/REDUX IS AN INFERIOR PARADIGM</a></li>
+</ul>
+<p>同時間在 egghead.io 上也 release 了一個 Cycle.js 的課程：</p>
+<ul>
+<li><a href="https://egghead.io/lessons/rxjs-the-cycle-js-principle-separating-logic-from-effects" target="_blank" rel="external">Lessons of Cycle.js</a></li>
+</ul>
+<p>(等等，這時機推出課程，真的不是在打廣告嗎？)</p>
+<p>我認為這個課程還蠻推薦的原因有底下兩點：</p>
+<ul>
+<li><p><strong>作者會告訴我們 Cycle.js 這樣設計的理念</strong><br>對我來說在學習一個框架時，<br>如果你不能理解為什麼要這樣設計，<br>那你就是用硬背的，這樣很容易忘記；<br>但如果你知道為什麼要命名成這樣、為什麼要這樣設計，<br>你等於進入了框架本身去使用它，<br>而不是被它框住。</p>
+</li>
+<li><p><strong>Observable 給我們不一樣的方式來思考如何 Handle events</strong><br>可以看看 Netflix 的<a href="https://www.youtube.com/watch?v=XRYN2xt11Ek&amp;hd=1" target="_blank" rel="external">例子</a></p>
+</li>
+</ul>
+<p>週末在家拉肚子之餘，順便把課程課完並做了一些筆記。</p>
+<p>先來看一下 Cycle.js 的 Get started code，</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> Cycle <span class="keyword">from</span> <span class="string">'@cycle/core'</span>;</span><br><span class="line"><span class="keyword">import</span> CycleDOM <span class="keyword">from</span> <span class="string">'@cycle/dom'</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">main</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> drivers = &#123;</span><br><span class="line">  DOM: CycleDOM.makeDOMDriver(<span class="string">'#app'</span>)</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">Cycle.run(main, drivers);</span><br></pre></td></tr></table></figure>
+<p>現在看起來很不習慣，但這篇會從無到有的建一個簡單版的 Cycle.js 出來，</p>
+<p>第一篇預計會實作很 primitve 的 drivers 以及 main，</p>
+<p>接著會把 run 給重構到幾乎跟現在 Cycle 核心中的寫法一樣。</p>
+<p>（當然還是只重概念說明的簡化版）</p>
+<p>不過這都只是個人的學習筆記，</p>
+<p>還是在大大推一下 egghead.io 上的課程</p>
+<ul>
+<li><a href="https://egghead.io/lessons/rxjs-the-cycle-js-principle-separating-logic-from-effects" target="_blank" rel="external">Lessons of Cycle.js</a></li>
+</ul>
+<h2 id="Prerequisite"><a href="#Prerequisite" class="headerlink" title="Prerequisite"></a>Prerequisite</h2><ul>
+<li><p>了解如何操作 collection<br>沒錯，Observable 和 array（或list）都是 collection</p>
+</li>
+<li><p>可以試試這個互動的課程，再來看這系列會更有感覺：<br><a href="http://reactivex.io/learnrx/" target="_blank" rel="external">http://reactivex.io/learnrx/</a></p>
+</li>
+<li><p>對於 Rx 已經有基礎的認識</p>
+</li>
+</ul>
+<h2 id="Cycle-js"><a href="#Cycle-js" class="headerlink" title="Cycle.js"></a>Cycle.js</h2><h3 id="Basic-Principle"><a href="#Basic-Principle" class="headerlink" title="Basic Principle"></a>Basic Principle</h3><ul>
+<li>第一條規則就是要將「logics」跟「effect」分開</li>
+</ul>
+<p>要來分清楚這兩個東西是什麼就要先來看一下程式碼了：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Logic</span></span><br><span class="line">Observable.timer(<span class="number">0</span>, <span class="number">1000</span>)</span><br><span class="line">    .map(i =&gt; <span class="string">`Seconds elapsed <span class="subst">$&#123;i&#125;</span>`</span>)</span><br><span class="line"><span class="comment">// Effect </span></span><br><span class="line">    .subscribe(text =&gt; &#123;</span><br><span class="line">        <span class="keyword">const</span> container = <span class="built_in">document</span>.querySelector(<span class="string">'#app'</span>);</span><br><span class="line">        container.textContent = text;</span><br><span class="line">    &#125;)</span><br></pre></td></tr></table></figure>
+<p>這是一個從 0 開始每一秒一數的計數器，</p>
+<p>詳情請見 <a href="https://github.com/Reactive-Extensions/RxJS/blob/master/doc/api/core/operators/timer.md" target="_blank" rel="external">Timer</a>。</p>
+<p>上半部的部分是「Logic」，</p>
+<p>而 subscribe 那一行開始，就是他怎樣呈現的 「Effect」。</p>
+<p>這裏有個很巧妙的概念，</p>
+<p>就是 Effect 才是真正影響到外面世界的地方（DOM），</p>
+<p>正如他的名字一樣；</p>
+<p>而 Logic 裏的東西只是單純的 Event stream，</p>
+<p>我們不去 Subscribe 他們，就不會有任何事情發生。</p>
+<p>Cycle.js 的原則就是將這兩大部分分開，</p>
+<p><code>Effect</code> 的部分是 Imperative 的，讓 Framework 幫你完成，</p>
+<p>身為開發者我們只要關心 <code>Logic</code> 的部分就夠了，</p>
+<p>而 Logic 的部分是 functional 的。</p>
+<h3 id="Main-以及-Effect"><a href="#Main-以及-Effect" class="headerlink" title="Main 以及 Effect"></a>Main 以及 Effect</h3><p>前面提到我們會將 logic 和 effect 分開，</p>
+<p>在 Cycle 中我們習慣會將 Logic 放到 main 裡面。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">main</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">        DOM: Observable.timer(<span class="number">0</span>, <span class="number">1000</span>)</span><br><span class="line">                       .map(i =&gt; <span class="string">`Seconds elapsed <span class="subst">$&#123;i&#125;</span>`</span>),</span><br><span class="line">        Log: Observable.timer(<span class="number">0</span>, <span class="number">2000</span>)</span><br><span class="line">                       .map(i =&gt; <span class="number">2</span>*i)</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">DOMEffect</span>(<span class="params">text$</span>) </span>&#123;</span><br><span class="line">    text$.subscribe(text =&gt; &#123;</span><br><span class="line">        <span class="keyword">const</span> container = <span class="built_in">document</span>.querySelector(<span class="string">'#app'</span>);</span><br><span class="line">        container.textContent = text;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">consoleLogEffect</span> (<span class="params">msg$</span>) </span>&#123;</span><br><span class="line">    msg$.subscribe(msg =&gt; <span class="built_in">console</span>.log(msg));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> sink = main();</span><br><span class="line">DOMEffect(sink.DOM);</span><br><span class="line">consoleLogEffect(sink.Log);</span><br></pre></td></tr></table></figure>
+<p>我們在 Main 裡面建了兩條不同的 stream，</p>
+<p>看起來已經將邏輯集中起來放，</p>
+<p>但是最下方從 sink 開始，</p>
+<p>似乎還是太 imperative 地去做這些事情。</p>
+<blockquote>
+<p>我們 Hard Coding 的去指定 consoleLogEffect 這個函數，</p>
+<p>一旦我們今天把 main 中的 log 拔掉，</p>
+<p>那整個程式就會報錯了，</p>
+<p>Cycle.js 中不希望我們每次更動 Logic 時需要注意一大堆 effect</p>
+</blockquote>
+<p>再來就要介紹一下 <code>run</code> 這個 function。</p>
+<h3 id="run"><a href="#run" class="headerlink" title="run"></a><code>run</code></h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">run</span>(<span class="params">mainFn, effects</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> sinks = mainFn();</span><br><span class="line">    <span class="built_in">Object</span>.keys(effects)</span><br><span class="line">    .forEach(key =&gt; &#123;</span><br><span class="line">        effects[key](sinks[key])</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> effectsFunctions = &#123;</span><br><span class="line">    DOM: DOMEffect,</span><br><span class="line">    Log: consoleLogEffect,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">run(main, effectsFunctions);</span><br></pre></td></tr></table></figure>
+<p><code>run</code> 會吃兩個參數，第一個就是我們管邏輯的 main，</p>
+<p>第二個則是 effect，</p>
+<p>我們如果不想要他在畫面上做事情，</p>
+<p>把在 effectFunctions 中的那個 key 給註解掉就行了，</p>
+<p>因為我們並沒有很 hard coding 的去呼叫每個 effectFunction。</p>
+<p>但是這裡要重新命名一下，將 effectFunctions 改成 drivers，</p>
+<p>一來是因為 effectFunctions 聽起來並不是個好命名方式XD</p>
+<p>二來是 drivers 即是我們熟悉的驅動程式，建立了硬體和軟體中間溝通的介面；</p>
+<p>而這裡的 driver 可以想成我們的程式(logic)，和畫面(effect)中間溝通的介面；</p>
+<p>還是很抽象嗎？</p>
+<p>那就從字面上的意思來看， driver 就是駕駛員，</p>
+<p>現在有一個駕駛員負責開著一台小車車，</p>
+<p>嘟嘟嘟的把我們寫的邏輯運送到畫面上，</p>
+<p>我們只要寫好邏輯、還有要送去的地方跟方式，</p>
+<p>剩下的就交給 driver 幫我們處理啦！</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">run</span>(<span class="params">mainFn, drivers</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> sinks = mainFn();</span><br><span class="line">    <span class="built_in">Object</span>.keys(drivers)</span><br><span class="line">    .forEach(key =&gt; &#123;</span><br><span class="line">        drivers[key](sinks[key])</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> drivers = &#123;</span><br><span class="line">    DOM: DOMDriver,</span><br><span class="line">    Log: consoleLogDriver,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">run(main, drivers);</span><br></pre></td></tr></table></figure>
+<p>這是我們手刻出來的簡單版本，</p>
+<p>而 Cycle.js 首頁的 get started 例子中，</p>
+<p>輪廓的確就是這樣子，</p>
+<p>只是在 driver 的部分，</p>
+<p>Cycle.js 幫我們做了更多事情。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">main</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    DOM: Rx.Observable.interval(<span class="number">1000</span>)</span><br><span class="line">      .map(i =&gt; CycleDOM.h1(<span class="string">''</span> + i + <span class="string">' seconds elapsed'</span>))</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> drivers = &#123;</span><br><span class="line">  DOM: CycleDOM.makeDOMDriver(<span class="string">'#app'</span>)</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">Cycle.run(main, drivers);</span><br></pre></td></tr></table></figure>
+<h3 id="Read-effects-from-the-External-world"><a href="#Read-effects-from-the-External-world" class="headerlink" title="Read effects from the External world"></a>Read effects from the External world</h3><p>前面有提過 Netflix 解決複雜電影選單的方式，</p>
+<p>就是透過 Observable 來重新思考處理 Events 的方式，</p>
+<p>但到目前為止，我們都還沒有用到最精髓的部分，</p>
+<p>而是把內部 Logic 寫好，沒有接收任何外來的 event stream。</p>
+<p>奠基於 Rx 上面的 Cycle.js 最精華的也正是這一段處理 event 的方式，</p>
+<p>同時這也是 <strong>Cycle</strong> 這名字的由來。</p>
+<p>首先先看前面寫的程式碼：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">DOMDriver</span>(<span class="params">text$</span>) </span>&#123;</span><br><span class="line">    text$.subscribe(text =&gt; &#123;</span><br><span class="line">        <span class="keyword">const</span> container = <span class="built_in">document</span>.querySelector(<span class="string">'#app'</span>);</span><br><span class="line">        container.textContent = text;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">main</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">        DOM: Observable.timer(<span class="number">0</span>, <span class="number">1000</span>)</span><br><span class="line">            .map(i =&gt; <span class="string">`Seconds elapsed <span class="subst">$&#123;i&#125;</span>`</span>),</span><br><span class="line">        Log: Observable.timer(<span class="number">0</span>, <span class="number">2000</span>)</span><br><span class="line">            .map(i =&gt; <span class="number">2</span> * i)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到它只有 input，沒有 output。</p>
+<p>而 main function 則反之，</p>
+<p>我們想從外部 read something ，就代表我們的 main 必須要有 input。</p>
+<blockquote>
+<p>這裏的前提是你照著 cycle.js 的單向資料流架構走</p>
+</blockquote>
+<p>所以我們先在 main 和 driver 各加上 input 和 output。</p>
+<p>接下來在 <code>run</code> 中會改回 hard code 的方式，</p>
+<p>這是為了更容易去理解，接著就會遇到最奇妙的地方：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">DOMDriver</span>(<span class="params">text$</span>) </span>&#123;</span><br><span class="line">    text$.subscribe(text =&gt; &#123;</span><br><span class="line">        <span class="keyword">const</span> container = <span class="built_in">document</span>.querySelector(<span class="string">'#app'</span>);</span><br><span class="line">        container.textContent = text;</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="keyword">const</span> DOMSource = Observable.fromEvent(<span class="built_in">document</span>, <span class="string">"click"</span>);</span><br><span class="line">    <span class="keyword">return</span> DOMSource</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">run</span>(<span class="params">mainFn, drivers</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> sinks = mainFn(DOMSource);</span><br><span class="line">    <span class="keyword">const</span> DOMSource = drivers.DOM(sinks.DOM);</span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我們看到 run 中間，DOMSource 需要 sinks 才能建立，</p>
+<p>但 sinks 也需要 DOMSource 才能被建立，</p>
+<p>形成一個很微妙的循環，是一個雞生蛋蛋生雞的問題。</p>
+<p>在更抽象化一點就是：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">a = f(b)</span><br><span class="line">b = g(a)</span><br></pre></td></tr></table></figure>
+<p>想要解決這件事其實沒那麼難，</p>
+<p>想法上是這樣：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bProxy = ...</span><br><span class="line">a = f(bproxy)</span><br><span class="line">b = g(a)</span><br><span class="line">bProxy.imitate(b)</span><br></pre></td></tr></table></figure>
+<p>這裏要靠 rx 裡面的 subject 來建立我們的 proxy。</p>
+<blockquote>
+<p>瞭解更多關於 Subject: </p>
+<p>from <a href="http://xgrommx.github.io/rx-book/content/getting_started_with_rxjs/subjects.html" target="_blank" rel="external">rx-book</a></p>
+<p>簡言之它同時繼承了 Observable 跟 Observer，</p>
+<p>所以我們既可以 subscribe 它，（Observable）</p>
+<p>又能夠對他呼叫 onNext、onError，以及 onCompleted（這就是 Observer 在做的事情）</p>
+</blockquote>
+<p>這裏就比較困難要分段看了，</p>
+<p>先到 run 裡面看看我們要怎麼按照上方的 pattern 來加入 proxy。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">run</span>(<span class="params">mainFn, drivers</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> proxyDOMSource = <span class="keyword">new</span> Subject();</span><br><span class="line">    <span class="keyword">const</span> sinks = mainFn(proxyDOMSource);</span><br><span class="line">    <span class="keyword">const</span> DOMSource = drivers.DOM(sinks.DOM);</span><br><span class="line">    DOMSource.subscribe(click =&gt; proxyDOMSource.onNext(click))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>DOMDriver 回傳了一個 click-event 的 stream（Observable），</p>
+<p>所以我們 subscribe 它，並且每一次呼叫 click 的 stream，</p>
+<p>跟我們前面創造的 proxy 整合在一起，</p>
+<p>下來再來看 proxy 傳進 main 發生了什麼事情。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">main</span>(<span class="params">DOMSource</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> click$ = DOMSource;</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">        DOM: click$</span><br><span class="line">        .startWith(<span class="literal">null</span>)</span><br><span class="line">        .flatMapLatest(() =&gt;</span><br><span class="line">            Observable.timer(<span class="number">0</span>, <span class="number">1000</span>)</span><br><span class="line">            .map(i =&gt; <span class="string">`Seconds elapsed <span class="subst">$&#123;i&#125;</span>`</span>)</span><br><span class="line">        ), </span><br><span class="line">        Log: Observable.timer(<span class="number">0</span>, <span class="number">2000</span>)</span><br><span class="line">            .map(i =&gt; <span class="number">2</span> * i)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>簡單說就是我們每次在螢幕上按一下(click)，</p>
+<p>就會重啟整個 timer。</p>
+<blockquote>
+<p>歸功於 flapMapLatest 這個 operator，</p>
+<p>假如這裡改用 flapMap 的話，會發現舊的 stream 還在繼續跑，</p>
+<p>整個 timer 會被搗亂，假如還不熟 flatMap 該怎麼用</p>
+<p>請至 prerequisite 玩一下 <a href="http://reactivex.io/learnrx/" target="_blank" rel="external">learn-rx</a></p>
+</blockquote>
+<p>而 <code>startWith(null)</code> 則是製造一次「假的」 event，</p>
+<p>來觸發第一次還沒 click 之前的 effect。</p>
+<p>現在的 code 看起來很糟糕，尤其是在 main 中 hard code DOMSource 這一點。</p>
+<p>首先先從 run 中下手：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">run</span>(<span class="params">mainFn, drivers</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> proxySources = &#123;&#125;;</span><br><span class="line">    <span class="built_in">Object</span>.keys(drivers).forEach(key =&gt;&#123;</span><br><span class="line">        proxySources[key] = <span class="keyword">new</span> Subject();</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="keyword">const</span> sinks = mainFn(proxySources);</span><br><span class="line">    <span class="built_in">Object</span>.keys(drivers)</span><br><span class="line">          .forEach(key =&gt; &#123;</span><br><span class="line">            <span class="keyword">const</span> source = drivers[key](sinks[key])</span><br><span class="line">            source.subscribe(x =&gt; proxySources[key].onNext(x))</span><br><span class="line">          &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如此一來我們就不用去 hard code 的指定每個 proxySource，</p>
+<p>而在 main 中簡單多了，只要把 click$ 的來源變成 sources.DOM 就好了，</p>
+<p>但在這裡我們可能會對一個 undefined 呼叫 subscribe。</p>
+<blockquote>
+<p>consoleLogDriver 並沒有 return 任何東西（nothing to be read）</p>
+</blockquote>
+<p>要避免這點只要加個判斷式就能夠解決，</p>
+<p>不過截至目前為止，我們其實已經把 Cycle core 中的 run 給實作的差不多了！</p>
+<ul>
+<li><a href="https://github.com/cyclejs/cycle-core/blob/master/src/cycle.js#L97:L118" target="_blank" rel="external">source code of run in Cycle.js</a></li>
+</ul>
+<blockquote>
+<p>當然還是有些差異在，像是 error-handling，</p>
+<p>以及在 Cycle core 的 proxy 中是用 <code>ReplaySubject</code> 而不是 <code>Subject</code></p>
+</blockquote>
+<hr>
+<h1 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h1><ul>
+<li><p><a href="http://staltz.com/why-react-redux-is-an-inferior-paradigm.html" target="_blank" rel="external">WHY REACT/REDUX IS AN INFERIOR PARADIGM</a></p>
+</li>
+<li><p><a href="http://staltz.com/unidirectional-user-interface-architectures.html" target="_blank" rel="external">UNIDIRECTIONAL USER INTERFACE ARCHITECTURES</a></p>
+</li>
+<li><p><a href="https://xgrommx.github.io" target="_blank" rel="external">Rx-book</a></p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/01/24/circle-js-2/" class="prev">PREV</a><a href="/2016/01/18/way-to-fed/" class="next">NEXT</a></div><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-65933410-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script></body></html>
