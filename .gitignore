@@ -1,4 +1,9 @@
 node_modules
-npm-debug.log
 coverage
 drafts
+.DS_Store
+Thumbs.db
+db.json
+*.log
+public/
+.deploy*/
