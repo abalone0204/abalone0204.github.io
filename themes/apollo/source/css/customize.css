@@ -1,3 +1,13 @@
+.tags-cloud {
+    text-align: center;
+}
+
+.tags-cloud a {
+    display: inline-block;
+    color: #53ca94;
+    padding: 4px;
+}
+
 .tags {
     display: inline-block;
     padding-left: 28px;

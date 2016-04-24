@@ -2,7 +2,10 @@ extends partial/layout
 
 block container
     include mixins/post
+    .tags-cloud
+        != tagcloud(tags)
     +postList()
+
 
 block pagination
     include mixins/paginator
