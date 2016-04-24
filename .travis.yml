@@ -8,25 +8,26 @@ git:
 notifications:
   email: false
 node_js:
-  - '4'
+- '4'
 before_install:
-  - touch ~/.ssh/id_rsa
-  - openssl aes-256-cbc -K $encrypted_560d9378b32c_key -iv $encrypted_560d9378b32c_iv
-    -in .travis/travis_id_rsa.enc -out ~/.ssh/id_rsa -d
-  - chmod 600 ~/.ssh/id_rsa
-  - eval $(ssh-agent)
-  - ssh-add ~/.ssh/id_rsa
-  - cp .travis/ssh_config ~/.ssh/config
-  - git config --global user.email "abalone0204@gmail.com"
-  - git config --global user.name "abalone0204"
-  - npm i -g npm@^2.0.0
-  - npm i -g hexo-cli
+- touch ~/.ssh/id_rsa
+- openssl aes-256-cbc -K $encrypted_560d9378b32c_key -iv $encrypted_560d9378b32c_iv
+  -in .travis/travis_id_rsa.enc -out ~/.ssh/id_rsa -d
+- chmod 600 ~/.ssh/id_rsa
+- eval $(ssh-agent)
+- ssh-add ~/.ssh/id_rsa
+- cp .travis/ssh_config ~/.ssh/config
+- npm i -g npm@^2.0.0
+- npm i -g hexo-cli
 before_script:
-  - npm prune
+- npm prune
+- git config --global user.name 'Travis CI'
+- git config --global user.email 'travis-ci@travis-ci.org'
 script:
-  - hexo generate
+- npm install
+- hexo generate
 after_success:
-  - hexo deploy
+- hexo deploy
 branches:
   only:
-  - deploy
+  - hexo
