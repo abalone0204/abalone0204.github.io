@@ -1,7 +1,7 @@
 ---
 title: 我的前端工程師之路
 date: 2016/1/18
-tags: [career, front-end]
+tags: ["career", "front-end"]
 ---
 
 「這個畫面幫我稍微調一下應該沒有很難吧？」

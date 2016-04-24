@@ -2,7 +2,7 @@
 title: 自動化發布
 date: 2016/1/6
 desc: CI
-tags: auto-realease JavaScript CI
+tags: ["auto-realease", "JavaScript","CI"]
 ---
 
 運用 npm 上的套件來做個簡單的 CI，

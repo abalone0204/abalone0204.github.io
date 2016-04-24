@@ -2,7 +2,7 @@
 title: 做中學 Cycle.js（上）
 date: 2016/1/23
 intro: Observable 是世界上最強的，其他東西都是——
-tags: cycle.js, observable
+tags: ["cycle.js", "observable"]
 ---
 
 之前 Redux 和 Cycle.js 作者在爭辯何者才是較好的 paradigm，

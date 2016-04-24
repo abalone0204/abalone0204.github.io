@@ -1,7 +1,9 @@
 ---
-title: migrate-to-hexo
+title: 搬家到 Hexo
 date: 2016-04-25 01:17:12
-tags: hexo
+desc: CI, hexo
+tags: ['hexo', 'CI']
+categories: DevOps
 ---
 
 雖然是在同個 repository，而且也是用 github page 來 host，

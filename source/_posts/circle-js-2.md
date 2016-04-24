@@ -2,7 +2,7 @@
 title: 做中學 Cycle.js（中）
 date: 2016/1/24
 intro: 
-tags: cycle.js observable
+tags: ["cycle.js", "observable"]
 ---
 
 Drivers 和一些簡單的例子

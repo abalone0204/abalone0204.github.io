@@ -1,7 +1,7 @@
 ---
 title: 做中學 Cycle.js（下）
 date: 2016/2/1
-tags: cycle.js observable
+tags: ["cycle.js", "observable"]
 ---
 
 Model-View-Intent & Component

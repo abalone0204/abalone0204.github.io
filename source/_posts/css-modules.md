@@ -2,7 +2,7 @@
 title: "CSS Modules: 模組化 CSS"
 intro: 「如果你覺得 CSS 寫起來很亂的話，那代表你心中沒有架構。」
 date: 2016/1/9
-tags: CSS Modules, PostCSS
+tags: ["CSS Modules", "PostCSS"]
 ---
 
 

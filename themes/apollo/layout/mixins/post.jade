@@ -1,6 +1,14 @@
-mixin postInfo(item)
+mixin postTags(item)
+    .tags
+        - item.tags.each(function(tag){
+            a.tag-link(href= url_for(tag.path)) ##{tag.name}
+        - })
+
+mixin postInfo(item, display)
     .post-time
         != full_date(item.date, 'll')
+        if display
+            +postTags(item)   
 
 //- Index Page
 mixin posts()
@@ -11,7 +19,7 @@ mixin posts()
                     h2.post-title
                         a.post-title-link(href= url_for(item.path))
                             != item.title
-                    +postInfo(item)
+                    +postInfo(item, true)
                     .post-content
                         != item.excerpt
                     a.read-more(href= url_for(item.path))!= __('more')
@@ -29,7 +37,7 @@ mixin postList()
             if change 
                 h2.archive-year!= year
             .post-item
-                +postInfo(item)
+                +postInfo(item, false)
                 a.post-title-link(href= url_for(item.path))
                     != item.title
         - })
