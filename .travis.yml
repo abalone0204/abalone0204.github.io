@@ -3,6 +3,8 @@ language: node_js
 cache:
   directories:
   - node_modules
+git:
+  submodules: false
 notifications:
   email: false
 node_js:
@@ -17,13 +19,13 @@ before_install:
   - cp .travis/ssh_config ~/.ssh/config
   - git config --global user.email "abalone0204@gmail.com"
   - git config --global user.name "abalone0204"
-  - git clone https://github.com/hexojs/hexojs.github.io .deploy
   - npm i -g npm@^2.0.0
   - npm i -g hexo-cli
 before_script:
   - npm prune
 script:
   - hexo generate
+after_success:
   - hexo deploy
 branches:
   only:
