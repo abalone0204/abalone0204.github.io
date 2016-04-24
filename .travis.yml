@@ -9,9 +9,7 @@ node_js:
 - '4'
 before_install:
 - openssl aes-256-cbc -K $encrypted_560d9378b32c_key -iv $encrypted_560d9378b32c_iv
-  -in .travis/travis_id_rsa.enc -out ~\/.ssh/travis_id_rsa -d
-- openssl aes-256-cbc -K $encrypted_b6cc801dbfe5_key -iv $encrypted_b6cc801dbfe5_iv
-  -in id_rsa.enc -out ~\/.ssh/id_rsa -d
+  -in .travis/travis_id_rsa.enc -out ~\/.ssh/id_rsa -d
 - chmod 600 ~/.ssh/id_rsa
 - eval $(ssh-agent)
 - ssh-add ~/.ssh/id_rsa
@@ -26,4 +24,4 @@ script:
 - npm run deploy
 branches:
   only:
-    - deploy
+  - deploy
