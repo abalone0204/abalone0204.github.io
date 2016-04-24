@@ -2,6 +2,7 @@ menu:
     Blog: /
     Archive: /archives/
     GitHub: https://github.com/abalone0204
+    Linkedin: https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name
     Rss: /atom.xml
 
 favicon: /favicon.png
@@ -9,12 +10,12 @@ logo: /favicon.png
 
 # Comment
 # e.g disqus: seansun
-disqus:
+disqus: abalone0204
 duoshuo: 
 
 # Analytics
 # google-analytics:
-ga: UA-65933410-1
+ga: UA-76858432-1
 # baidu-analytics:
 ba: 
 

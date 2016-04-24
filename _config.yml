@@ -75,4 +75,4 @@ archive_generator:
 deploy:
   type: git
   repo: git@github.com:abalone0204/abalone0204.github.io.git
-  branch: gh-pages
+  branch: master
