@@ -4,7 +4,7 @@
 
 # Site
 title: De-bug
-subtitle: { web, computer, data }
+subtitle: "{ web, computer, data }"
 description: Your future is my design.
 author: Tsung-Chen Ku
 language:
@@ -63,11 +63,16 @@ pagination_dir: page
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: landscape
+theme: apollo
+archive_generator:
+    per_page: 5
+    yearly: true
+    monthly: true
+    daily: true
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
   repo: git@github.com:abalone0204/abalone0204.github.io.git
-  branch: gh-pages
+  branch: master
