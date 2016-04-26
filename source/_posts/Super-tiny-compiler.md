@@ -108,7 +108,7 @@ Compiler 的工作是將「來源代碼」轉成「目標語言」。
 
 但這種事情，都碼是你想出來之後就覺得很簡單，
 
-所以做完一遍之後，反而更能感受到設計 compiler 是一件多們偉大的事情。
+所以做完一遍之後，反而更能感受到設計 compiler 是一件多麽偉大的事情。
 
 > 想當年臉書紅的時候，多少人說過自己當年也想要做一個社群網站呢 XD
 
@@ -278,7 +278,9 @@ throw new TypeError('I dont know what this character is: ' + char);
 
 也提高了可讀性，而且看起來還很帥。
 
-有句話說得好：「嫩嫩迴圈，大大遞迴。」
+有句話說得好：
+
+>「嫩嫩迴圈，大大遞迴。」
 
 只要能遞迴，就一定要遞迴一下。
 
@@ -371,7 +373,7 @@ if (token.type === 'parenthesis') {
 
 再來繼續往下看下個 token，
 
-這裡會比較困難一點點，但應該還是很簡單吧（這句話平常應該聽很多吧XDD）：
+這裡會比較困難一點點：
 
 ```js
 if (token.type === 'parenthesis') {
@@ -408,7 +410,7 @@ if (token.type === 'parenthesis') {
 
 要解析一個 expression 中的 expression 的方法，
 
-那就在 walk 裡面再 call 一次 expression 就好了，
+那就在 `walk` 裡面再 call 一次 `walk` 就好了，
 
 我想可以人體 compile 一下上面的那行 lisp，
 
@@ -420,7 +422,7 @@ if (token.type === 'parenthesis') {
 throw new TypeError(token.type);
 ```
 
-實作完 walk 函數以後，要建出 AST 就簡單多了
+實作完 `walk` 函數以後，要建出 AST 就簡單多了
 
 ```js
 function parser(tokens) {
