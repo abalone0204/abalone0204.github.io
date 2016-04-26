@@ -2,6 +2,7 @@
 title: Super tiny compiler
 date: 2016-04-25 23:04:37
 tags: [compiler, js]
+desc: compiler, javascript
 ---
 
 造一個超級小又可愛的 Compiler，
@@ -9,6 +10,8 @@ tags: [compiler, js]
 沒有組語，只有 JavaScript。
 
 <!--more-->
+
+<img width="731" alt="THE SUPER TINY COMPILER" src="https://cloud.githubusercontent.com/assets/952783/14413766/134c4068-ff39-11e5-996e-9452973299c2.png"/>
 
 # 前言：被玩壞的工具鏈
 
