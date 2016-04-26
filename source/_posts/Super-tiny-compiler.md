@@ -891,4 +891,3 @@ function compiler(input) {
 # License
 
 - [licensed through Creative Commons](http://creativecommons.org/licenses/by/4.0/)
-
