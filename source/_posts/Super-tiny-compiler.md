@@ -134,7 +134,7 @@ add(22, subtract(43, 2))
 
 ```js
 function compiler(input) {
-    var token = lexer(input);
+    var tokens = lexer(input);
     var ast = parser(tokens);
     var nextAst = transformer(ast);
     var output = codeGenerator(nextAst);
