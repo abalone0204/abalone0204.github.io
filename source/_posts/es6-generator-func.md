@@ -14,9 +14,10 @@ es 2015 中有一項新的 feature 叫做 **generator function**，
 
 可能都知道 generator function 是什麼，
 
-不過對於一位平常都在寫 JavaScript 的人，這就很新鮮了。
+不過對於一位平常都在寫原生 JavaScript 的人，這就很新鮮了。
 
-（前提是如果你現在還是很習慣不小心製造 callback hell 的話）
+> 當然，generator 就算在 es 裡面也不算是什麼太新鮮的東西。
+> 畢竟跟 JavaScript 有關的東西大概超過一個月就算舊的了
 
 使用 Generator function 並不是一件求新求潮的一件事情，
 
@@ -24,8 +25,19 @@ es 2015 中有一項新的 feature 叫做 **generator function**，
 
 這篇文章就來淺淺的介紹一下 Generator function 究竟是什麼。
 
+之所以是淺淺的介紹是因為，
+
+我認為介紹太多不同的特性，沒有搭配實際的應用，
+
+那其實只是一篇寫的比較詳細的 document，
+
+所以這篇只打算介紹到「可以用」的程度而已。
+
+後續幾篇會在實戰中的應用。
+
 > 其實本來是要寫關於`redux-saga`的，
-> 只是不先介紹 generator 真的講不下去 QQ
+> 只是不先介紹 generator 真的講不下去 Q_Q
+
 
 <!--more-->
 
