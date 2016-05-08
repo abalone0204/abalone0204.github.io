@@ -31,29 +31,31 @@ es 2015 中有一項新的 feature 叫做 **generator function**，
 
 這篇會包含以下幾個主題：
 
-- Generator function 是什麼
+- [Generator function 是什麼](#Generator-function-是什麼)
 
-- Syntax
+- [Syntax](#Syntax)
     
-    - 宣告一個 Generator function
+    - [宣告一個 Generator function](#宣告一個-generator-function)
 
-    - `yield`
+    - [`yield`](#yield)
 
-    - `next`
+    - [`next`](#next)
 
-    - 在 `next` 中傳入參數
+    - [在 `next` 中傳入參數](#在-next-中傳入參數)
 
-    - `for...of`
+    - [`for...of`](#for-of)
 
-    - Error handling(optional)
+    - [Error handling(optional)](#Error-handling-Optional)
 
-    - Delegating Generators - Generator 中的 generator (optional)
+    - [Delegating Generators - Generator 中的 generator (optional)](#Delegating-Generators-Generator-中的-generator-optional)
 
-- 如何啟用 Generator function
+- [如何啟用 Generator function](#如何啟用-Generator-function)
 
-- 實際上的應用
+- [實際上的應用](#實際上的應用)
 
-# Generator function 有什麼特別
+----
+
+# Generator function 是什麼
 
 先來講講我們熟悉的 function：
 
@@ -106,7 +108,7 @@ iterator.next() // 2
 
 # Syntax
 
-- 宣告一個 generator function
+## 宣告一個 generator function
 
 ```js
 function* generatorFoo() {
