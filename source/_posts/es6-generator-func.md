@@ -237,7 +237,7 @@ iterator.next() // 0
 
 ```js
 // source from:  https://davidwalsh.name/es6-generators
-function *foo(x) {
+function* foo(x) {
     const y = 2 * (yield (x + 1));
     const z = yield (y / 3);
     return (x + y + z);
@@ -265,7 +265,7 @@ console.log( iterator.next( 13 ) );   // { value:42, done:true }
 將上述的值全部替代進去會長成下面這樣：
 
 ```js
-function *foo(x) {
+function* foo(x) {
     const y = 2* (12)
     const z = (13)
     return 5+24+13
@@ -306,7 +306,7 @@ function* foo() {
 
 ```js
 
-function *foo() {
+function* foo() {
     try {
         const x = yield 3;
         console.log( "x: " + x ); // may never get here!
@@ -334,11 +334,11 @@ iterator.throw('error messages') // Error: error messages
 這個 error 就會丟出來外面被 catch 住：
 
 ```js
-function *foo() { }
+function* foo() { }
 
 const iterator = foo();
 try {
-    it.throw( "error message" );
+    iterator.throw( "error message" );
 }
 catch (err) {
     console.log( "Error: " + err ); // Error: error message
