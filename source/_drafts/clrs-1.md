@@ -74,4 +74,13 @@ tags: [algorithms]
 
 # Merged sort
 
+- 先切成小塊、排序(A[1.. n/2], A[n/2 +1 .. n])
+    - T(n)
 
+- key subroutine: merge
+    - theta(n)
+
+
+merge 是怎麼進行的：
+
+假設我們有兩個排好

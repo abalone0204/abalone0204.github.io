@@ -318,7 +318,7 @@ function *foo() {
 
 ```
 
-比較不一樣的是我們能在外面直接把 error 丟進去：
+不一樣的是我們能在外面直接把 error 丟進去：
 
 ```js
 const iterator = foo()
@@ -327,11 +327,11 @@ iterator.next() // x: 3
 iterator.throw('error messages') // Error: error messages
 ```
 
-比較 tricky 的地方是我們把 error 給丟進去，
+這裡有個比較 tricky 的地方是我們把 error 給丟進去後，
 
-所以如果在 generator 內部沒有catch 到，
+如果在 generator 內部沒有catch 到，
 
-這個 error 會丟出來外面被 catch 住：
+這個 error 就會丟出來外面被 catch 住：
 
 ```js
 function *foo() { }
@@ -454,9 +454,9 @@ generator 能幫助我們做到什麼。
 
 乍看之下很神奇，
 
-但在你了解 generator function 不過就是個能夠暫停、繼續的 function 後，
+但在了解 generator function 不過就是個能夠暫停、繼續的 function 後，
 
-就大概能對他能做到的是有最初步的想像了。
+就大概能對他能做到的事有最初步的想像了。
 
 
 # 參考資料
