@@ -67,9 +67,9 @@ tags: [algorithms]
 
 - worst case: reversed sorted
 
-- T(n) = 1+2+3...+(n-1) => O(n^2)
+- T(n) = 1+2+3...+(n-1) => theta(n^2)
 
-- `O` 是 weak notation，不能直接拿來約分
+- `theta` 是 weak notation，不能直接拿來約分
 
 
 # Merged sort
@@ -84,3 +84,20 @@ tags: [algorithms]
 merge 是怎麼進行的：
 
 假設我們有兩個排好
+
+```
+T(n) = 2T(n/2) +theta(n)
+     = 2T(n/2) + c*n // c > 0
+```
+
+從上述可以推導:
+
+```
+T(n/2) = 2T((n/2)/2) + c*(n/2)
+```
+
+...
+
+畫成樹狀會比較好懂些
+
+> TODO
