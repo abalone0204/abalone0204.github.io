@@ -7,8 +7,6 @@ tags:
 date: 2016-05-08 21:43:08
 ---
 
-![shallow](http://www.rumproast.com/images/uploads/shallow_end_thumb.jpg)
-
 es 2015 中有一項新的 feature 叫做 **generator function**，
 
 假如熟稔其他語言的人，
@@ -26,6 +24,8 @@ es 2015 中有一項新的 feature 叫做 **generator function**，
 
 這篇文章就來淺淺的介紹一下 Generator function 究竟是什麼。
 
+<!--more-->
+
 之所以是**淺淺的介紹**是因為，
 
 我認為深入介紹太多不同的特性，
@@ -36,6 +36,8 @@ es 2015 中有一項新的 feature 叫做 **generator function**，
 
 所以這篇只打算介紹到「可以用」的程度而已。
 
+![shallow](http://www.rumproast.com/images/uploads/shallow_end_thumb.jpg)
+
 這篇文章的圖片就是在提醒你這是一篇淺淺的文章，
 
 讓我們慢慢跳進去，才不會一開始就把頭撞爛。
@@ -43,8 +45,6 @@ es 2015 中有一項新的 feature 叫做 **generator function**，
 > 其實本來是要寫關於`redux-saga`的，
 > 只是不先介紹 generator 真的講不下去 Q_Q
 
-
-<!--more-->
 
 這篇會包含以下幾個主題：
 
