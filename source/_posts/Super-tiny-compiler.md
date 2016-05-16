@@ -1,7 +1,7 @@
 ---
 title: Super tiny compiler
 date: 2016-04-25 23:04:37
-tags: [compiler, js]
+tags: [compiler, JavaScript]
 desc: compiler, javascript
 ---
 

@@ -4,8 +4,8 @@ tags:
   - redux
   - saga
   - redux-saga
-  - generator
 date: 2016-05-14 19:02:18
+desc: redux, JavaScript, redux-saga, saga
 ---
 
 > 這是篇長文，你可以直接跳到[你想看的地方](/2016/05/14/redux-saga/#Catalogue)就好
