@@ -955,5 +955,3 @@ it('should cancel the login task',  () => {
 - [sagas original paper by Hector Garcia-Molina & Kenneth Salem](http://www.cs.cornell.edu/andru/cs711/2002fa/reading/sagas.pdf)
 
 - [redux-thunk-to-saga-tutorial](https://github.com/abalone0204/redux-thunk-to-saga-tutorial)
-
-- 
