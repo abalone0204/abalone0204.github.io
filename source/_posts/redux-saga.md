@@ -34,6 +34,10 @@ date: 2016-05-14 19:02:18
 
 <!--more-->
 
+![Adventure time](https://upload.wikimedia.org/wikipedia/zh/3/37/Adventure_Time_-_Title_card.png)
+
+> saga 的中文翻譯是冒險故事 
+
 > 這裡來舉個例子：我們要登入
 
 ```
