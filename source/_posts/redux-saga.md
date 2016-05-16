@@ -631,10 +631,10 @@ export function* loginFlow() {
 ```js
 describe('Sagas/ login', () => {
     describe('watchRequestLogin', () => {
-        const generator = watchRequestLogin()
+        const iterator = watchRequestLogin()
         it('should take every login request', () => {
             const expected = takeEvery(LOGIN_REQUEST, loginFlow)
-            const actual = generator.next().value
+            const actual = iterator.next().value
             assert.equal(expected.name, actual.name)
         })
     })
@@ -701,10 +701,15 @@ call 跟我們熟悉的 `Function.prototype.call` 很像！
 
 前面的 watch function 會把 request 這個 action 丟進來這裡，
 
-所以我們要先製造出一個待會會用到的 generator：
+所以我們要先製造出一個待會會用到的 iterator：
+
+> 執行 Generator function 會返回一個 iterator，
+> 然後我們去對這個 iterator 呼叫 `next` function
+> 感謝 CT 的指正。
+
 
 ```js
-const generator = loginFlow({
+const iterator = loginFlow({
     type: LOGIN_REQUEST,
     username: 'denny',
     password: '12345678'
@@ -721,7 +726,7 @@ it('should call loginAPI', () => {
         username: 'denny',
         password: '12345678'
     })
-    const actual = generator.next().value
+    const actual = iterator.next().value
     assert.deepEqual(expected, actual)
 })
 ```
@@ -739,7 +744,7 @@ it('should handle login success', () => {
             token: 'fake token'
         }
     })
-    const actual = generator.next(getResponse()).value
+    const actual = iterator.next(getResponse()).value
     assert.deepEqual(expected, actual)
 })
 ```
@@ -884,7 +889,7 @@ it('should fork to authorize', () => {
         username: 'denny',
         password: '12345678'
     })
-    const actual = generator.next().value
+    const actual = iterator.next().value
     assert.deepEqual(expected, actual)
 })
 ```
@@ -899,13 +904,13 @@ it('should fork to authorize', () => {
 const task = createMockTask()
 it('should take cancel login action',  () => {
     const expected = take(LOGIN_CANCEL)
-    const actual = generator.next(task).value
+    const actual = iterator.next(task).value
     assert.deepEqual(expected, actual)            
 })
 
 it('should cancel the login task',  () => {
     const expected = cancel(task)
-    const actual = generator.next().value
+    const actual = iterator.next().value
     assert.deepEqual(expected, actual)            
 })
 ```
