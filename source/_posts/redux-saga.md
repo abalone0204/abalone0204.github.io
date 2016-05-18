@@ -93,7 +93,7 @@ if (登入成功) {
 
 # Catalogue
 
-- [Introdoction](#Introdoction)
+- [Introduction](#Introduction)
 
 - [什麼是 Saga](#什麼是-Saga)
     
@@ -133,7 +133,7 @@ if (登入成功) {
 
 
 
-# Introdoction
+# Introduction
 
 有些人會說 `redux-saga` 的學習曲線比較陡峭，
 
@@ -336,7 +336,7 @@ Saga's gurantee：
 
 - 失敗的話(Unsuccessful saga)：
 
-    - `t_1`, `t_2`...., `t_n`, `c_n`..., c_1
+    - `t_1`, `t_2`...., `t_n`, `c_n`..., `c_1`
 
 ![failed](http://i.imgur.com/thzgNNg.gif)
 
