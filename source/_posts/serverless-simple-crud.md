@@ -1,5 +1,5 @@
 ---
-title: 淺析 serverlss 架構與實作
+title: 淺析 serverless 架構與實作
 tags:
   - serverless
   - aws-lambda
