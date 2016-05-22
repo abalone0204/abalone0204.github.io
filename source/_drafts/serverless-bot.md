@@ -11,6 +11,21 @@ Serverless 不代表沒有 server，
 
 這篇文章最後會以 aws lambda 搭配 serverless framework 或是 apex 為例。
 
+身為一個軟體工程師，
+
+我們大部分都在追求低耦合（decoupling）的程式碼，
+
+serverless 以 function 為單位，
+
+看起來好像達到了這件事，實際上卻是像壽司一樣。
+
+(圖：如何做壽司) 
+
+了解如何活用而不搞砸就更考驗我們設計系統的技巧了。
+
+> 幹他媽我寫到一半也差點就要放棄了
+
+
 <!--more-->
 
 # Catalogue
@@ -40,6 +55,16 @@ Serverless 不代表沒有 server，
 > - 電腦（硬體）
 
 > 這本好書叫做 SICP(Structure and Interpretation of Computer Programs)
+
+## 常見的問題
+
+- 資料的持久性
+
+- Log
+
+我知道還有很多其他問題，但基本上只要能符合第一點，
+
+再加上本來能執行的 function，你基本上就能完成一個 application
 
 ## 限制
 
@@ -102,6 +127,13 @@ Event driven
 - Lambda function
 
 - event source
+
+
+handler:
+
+>As part of the configuration, you also specify a handler (that is, a method/function in your code) where AWS Lambda can begin executing your code. AWS Lambda provides event data as input to this handler, which processes the event.
+
+
 
 ## Setup
 
@@ -220,10 +252,121 @@ serverless dash deploy
 
 - 每個 endpoint 可以有許多個 method( GET, POST...)
 
+- Handler 則是 aws lambda 執行的進入點
+
+來看一下 handler.js
+
+```js
+module.exports.handler = function(event, context, cb) {
+    // empty
+}
+```
+
+第一個參數 `event` 就是我們前面提到的 source event，
+
+第二個 `context` 則是 lambda function 在運行時跟整個環境互動，以及環境的訊息。
+
+> 這裡有點抽象 等到後來例子在講解會更清楚一點
+
+
+- logging： CloudWatch
+
+## Programming model: Nodejs
+
+我們一直在談 lambda function，
+
+實際上我們運行的 function 就是長下面這個樣子，
+
+在開始討論其他配置，和 aws 要怎麼運行到這裡之前，
+
+先搞清楚到底在談論什麼東西：
+
+```js
+function(event, context)
+```
+
+> 可以有第三個參數 cabllback，
+> 不過其實只要這兩項就可以運作的很好了，
+> 而且 callback 實在不是一個好事
+
+## event
+
+source event，可以是 push 或 pull model。
+
+## context
+
+`context` 參數是一個 object，
+
+裡面包含了當前 lambda 運行環境的訊息，
+
+以及一些 method。
+
+有三個 methods 是一定要知道的：
+
+> 這裡的參數是可選的，我們可以只讓 function 做事，
+> 沒有一定要強制回傳結果。
+
+- `context.succeed(Object result)`
+    
+    - 可以在執行成功時回傳東西： `context.succeed(someObject)`
+
+    - 注意這裡的 `result` 必須要能夠被 JSON.stringifyu 轉成字串
+
+- `context.fail(Error error)` 
+
+    - 在失敗時回傳東西
+
+- `context.done(Error error, Object result)`
+
+    - 這個就有點奇葩了，有了成功和失敗為什麼還要存在個 done 呢？
+
+
+再來是可以看到目前執行剩餘時間：
+
+`context.getRemainingTimeInMillis()`
+
+這裡所謂的看到當然是指在 function 執行時我們能利用啦！
+
+不過要注意的是如果一定歸零，AWS lambda 就會強制終止我們的 lambda function 了。
+
+## handler.js
+
+前面有提到過這裡就是 aws 運行的進入點，
+
+要在 `s-function.json` 裡面設定，
+
+這裡看到我們只在 `handler` 那個屬性打上 : `handler.handler`，
+
+這有兩件事情值得注意：
+
+- 對應執行的就是 `handler.js` 這個 module 底下的 `handler`
+
+
+```js
+// in handler.js
+module.exports.handler = function(event, context) {
+    // This be implemented
+}
+
+```
+
+第二件事就是這個 hanlder 屬性還隱含著我們目前能作用的 scope，
+
+假如我們是：`function1/handler.handler`，
+
+就把上層的 parent folder 給包含進去，
+
+所以他就吃得到我們在根目錄安裝的 npm 套件。
+
+> 比如說你安裝了 react，那你就可以：
+> `require('react')`
+
 # 參考資料
 
 - [谈谈AWS Lambda和serverless architecture](https://zhuanlan.zhihu.com/p/20297696)
 
 - [AWS Lambda Dodumentation](https://aws.amazon.com/tw/documentation/lambda/)
+
+    - [Programming model: Nodejs](http://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html)
 
 - [CloudFormation](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html)

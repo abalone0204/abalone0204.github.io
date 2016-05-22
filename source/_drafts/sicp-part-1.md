@@ -1,5 +1,5 @@
 ---
-title: "SICP：第一章讀後筆記"
+title: "Building Abstractions with Procedures"
 tags: [sicp, plt, computer-science]
 ---
 
@@ -27,9 +27,9 @@ Lisp 是很先進的語言，只是生不逢時，
 
 這不是一系列讓人速成的文章，
 
-寫程式本身是一種藝術，
+寫程式本身是一種藝術，在藝術上要有所成就，
 
-在藝術上要有所成就，沒有什麼速成的事情，
+沒有什麼速成的事情，
 
 只是紀錄一下現階段的我看完之後得到的想法或啟發。
 
@@ -58,7 +58,6 @@ Lisp 是很先進的語言，只是生不逢時，
 - No，但我並不覺得這是一個簡單的課。
 
 - 安裝 Chez Scheme（最近[開源了](https://github.com/cisco/ChezScheme)）
-
 
 ```bash
 git clone git@github.com:cisco/ChezScheme.git
