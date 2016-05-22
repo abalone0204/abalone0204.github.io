@@ -26,6 +26,11 @@ serverless 更考驗著我們對系統設計的思維，
 
 不管是在概念上，還是在實務的使用上。
 
+> 假如你是懶得看文章的人，可以直接到我的 [github repo](https://github.com/abalone0204/serverless-demo-with-dynamodb-node) 上面看
+
+> 有哪裡寫錯的話可以提個 issue，覺得讚讚讚的話也可以給星星以茲鼓勵。
+
+
 <!--more-->
 
 試想當你是一個單槍匹馬的開發者時，你絕對會希望能真正專心在開發，
