@@ -60,7 +60,7 @@ tags: [clairvoyance, serverless, chrome-extension]
 
 不過其實就像我們平常在做一件事情一樣，用想的都很簡單。
 
-但總歸會遇到三個問題：
+但總歸其實只會遇到三個問題：
 
 1. 真正做的時候會遇到問題
 
@@ -154,7 +154,7 @@ tags: [clairvoyance, serverless, chrome-extension]
 
 基於不想在假日麻煩人，我上了 [codepen](https://codepen.io) 去看他們的 license：
 
-> codepen 是一個讓前端工程師放作品的地方，上面有蠻多好玩的設計以及如何時做的原始碼。
+> codepen 是一個讓前端工程師放作品的地方，上面有蠻多好玩的設計以及如何實做的原始碼。
 
 > 有人會問跟 pinterest 有什麼差別？
 
