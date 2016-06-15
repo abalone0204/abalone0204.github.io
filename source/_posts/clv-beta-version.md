@@ -1,5 +1,5 @@
 ---
-title: 寫在求職天～眼通發布之後：一個軟體開發者的社會責任
+title: 寫在 Clairvoyance 發布之後：軟體開發者的社會責任
 date: 2016-06-16 01:44:00
 tags: [clairvoyance, serverless, chrome-extension]
 ---
@@ -31,6 +31,7 @@ tags: [clairvoyance, serverless, chrome-extension]
 其他說明的話 [ptt 上的文章](https://www.ptt.cc/bbs/Soft_Job/M.1465759641.A.E57.html)會清楚得多。
 
 
+
 ![Jean Grey and Cyclops from Entertainment Weekly](http://i.imgur.com/QvYeAmN.png)
 
 > Jean Grey and Cyclops from Entertainment Weekly
@@ -41,7 +42,7 @@ tags: [clairvoyance, serverless, chrome-extension]
 
     - 只有這一小段會講到比較多技術相關的
 
-- [發布 Beta 版本](#發布 Beta 版本)
+- [發布 Beta 版本](#發布-Beta-版本)
 
 - [收到回饋之後](#收到回饋之後)
 
@@ -420,6 +421,8 @@ tags: [clairvoyance, serverless, chrome-extension]
 
 有各種雲端服務幫你搞定基礎建設（IaaS、SaaS、PaaS），
 
+還有各種框架幫你搞定 UI。
+
 基本上你只要有想法、計畫，再加上一段時間穩紮穩打的學習、練習，
 
 幾乎就能解開各種 Issue 了，
@@ -428,7 +431,18 @@ tags: [clairvoyance, serverless, chrome-extension]
 
 讚讚讚！
 
-- [github: Clairvoyance](https://github.com/abalone0204/Clairvoyance)
+
+
+- [github repo: Clairvoyance](https://github.com/abalone0204/Clairvoyance)
+
+- [facebook 粉絲專頁](https://www.facebook.com/clairvoyance4job/)
+
+
+也期許自己未來是真正的 RD 工程師，
+
+而不是出現 bug 只會 XD 的 XD 工程師：
+
+![XD](http://i.imgur.com/lwFbW4l.jpg)
 
 # References
 
