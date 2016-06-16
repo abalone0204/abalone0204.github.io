@@ -212,7 +212,7 @@ tags: [clairvoyance, serverless, chrome-extension]
 
 - 害怕的是我覺得這東西還不夠成熟，怕一開始太難用就直接被拋棄。
 
-令我意外的是， aws lambda 和 DynamoDB 完成撐住了流量，
+令我意外的是， aws lambda 和 DynamoDB 完全撐住了流量，
 
 當初把這些東西交到雲端託管有了成效，
 
@@ -246,7 +246,7 @@ tags: [clairvoyance, serverless, chrome-extension]
 
 剩下的只是繼續累積。
 
-在現階段做了太激進、會讓人力銀行對這個 extension 採取行動的事情，
+太激進、會讓人力銀行對這個 extension 採取行動的事情，
 
 都不該去做，因為目前還玩不起這個槓桿。
 
@@ -383,7 +383,23 @@ tags: [clairvoyance, serverless, chrome-extension]
 
 所以這插件只有在這樣子的台灣才會有需求XD
 
+> 題外話是其實台灣也有蠻多新的求職平台，
 
+> 像是 [sudo](https://sudo.com.tw/)，
+
+> 或是 [yourator](https://www.yourator.co/)，
+
+> 都相當不錯，而且在資訊上也相對傳統的人力銀行透明很多，
+
+> 不過都是比較以新創或工程師為主。
+
+> 特別講到 sudo 是因為他們的留言功能更完整，
+
+> （正因為以前就在那裡工作才更了解這些事情）
+
+> 裡面的就職顧問雖然是講話很愛中英交雜的 AIESECer，
+
+> 但絕對是真心要幫助工程師求職的：Ｄ
 
 再來雖然現代人生活離不開電腦，
 
