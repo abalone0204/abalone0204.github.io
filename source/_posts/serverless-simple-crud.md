@@ -298,7 +298,7 @@ serverless 對我而言是個很合理的選擇，
 
 待會會用到。
 
-接著選擇剛剛建立的那個 user：`serverlss-admin`，
+接著選擇剛剛建立的那個 user：`serverless-admin`，
 
 在 permissions 的地方加上新的 policy，
 
