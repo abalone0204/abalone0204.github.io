@@ -76,6 +76,8 @@ tags: [eslint, webpack]
 
     - [Integration with git hooks](#Integration-with-git-hooks)
 
+    - [Other solution](#Other-solution)
+
 - [Conclusion](#Conclusion)
 
 ----
@@ -398,7 +400,9 @@ rule 就是我們在 style guide 中定義的規則，
 
 分別是 `off`, `warn`, `error`，
 
-> 它們分別對應到 0, 1, 2 三個數字。
+> 它們分別對應到 0, 1, 2 三個數字，
+
+> 也就是說 `{"curly": "error"}` 和 `{"curly": 2}` 是一樣的意思。
 
 看例子可能會清楚一點：
 
@@ -564,6 +568,30 @@ loaders array 中的順序是相當重要的，因為它的順序是從最後面
 
 現在你已經有一個自動化的 linter 了。
 
+補充一下，有些人可能會用 webpack 的 provide plugin，
+
+去省掉一些 `../../../../actions/doSomething.js` 的程式碼，
+
+這時候你可能會需要這個 plugin: [eslint-import-resolver-webpack](https://www.npmjs.com/package/eslint-import-resolver-webpack)，
+
+然後你要在 `.eslintrc` 的 settings 裡面加上：
+
+```json
+{
+  "settings": {
+    "import/resolver": {
+      "webpack": "webpack.config.js"
+    }
+  }
+}
+```
+
+這樣子當你使用 `no-unresolved` 這條規則時，
+
+eslint 會先去檢查你在 provide 裡的 alias，
+
+再來看有沒有辦法 resolve 這個 path。
+
 ## Integration with git hooks
 
 > 如果你很熟悉 git 的話甚至可以不用安裝這套件 XD 
@@ -621,6 +649,41 @@ $> npm install husky --save-dev
 
 > 你可以挑一個在適當的時機執行語法的 lint
 
+## Other solution
+
+不過如果每次 Commit 都要跑一次 lint，讓你很煩的話，
+
+實務上的做法也可以只整合在 IDE 以及 CI server 上就足夠。
+
+假如你還是要保留原本的流程，
+
+但在某些整理 commit 時並不需要重新執行 lint的話，
+
+也可以在 commit 時加上 `--no-verify`或`-n`。
+
+還有一個做法是使用 [`lint-staged`](https://github.com/okonet/lint-staged) 這個套件，
+
+簡單的說，它會讓 linter 只檢查新放上 stage 的 code，
+
+> 在 git 中執行 add 之後，會把 file 放到 stage 上，
+
+> 這就是為什麼他要命名為 `lint-staged`。
+
+這樣每次的 Commit 就不用重新檢查一次全部的程式碼了。
+
+> 快速的想過一遍之後，`lint-staged`可能會有個小 gotcha，
+
+> 可能在 `no-unresolved` 這條 rule 上面犯錯。
+
+> 舉例來說 a 檔案會 require `./b`，
+
+> 然後我把 b 刪掉了，這次 a 檔案並不會上 stage，
+
+> 所以這次檢查並不會把這個錯誤給檢查出來，
+
+> 但整體而言其實還是為我們省了不少時間，
+
+> 就看個人怎麼選擇啦！
 
 # Conclusion
 
@@ -654,6 +717,18 @@ $> npm install husky --save-dev
 
 嗯⋯⋯
 
+晚了一點以後更新成 airbnb 的 config 然後自己修改一下 rule，
+
+變成：
+
+![error2](http://i.imgur.com/PYzEmMf.png)
+
+....
+
+![eyes](http://i.imgur.com/2yJBwXp.jpg)
+
+這一定是假的。
+
 # References
 
 - [eslint](http://eslint.org/)
@@ -666,3 +741,4 @@ $> npm install husky --save-dev
 
 - [eslint-loader](https://github.com/MoOx/eslint-loader)
 
+> 感謝 [`@ctwu`](https://github.com/wuct) 、李俊緯 以及 Amobiz Chen 的建議
