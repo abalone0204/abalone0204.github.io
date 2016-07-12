@@ -427,6 +427,33 @@ rule 就是我們在 style guide 中定義的規則，
 
 同樣的，我們可以藉由 `<pluginName>/rule` 來獲取 plugin 底下定義的 rule。
 
+補充一下，你也可以在一些特別的時候 enable 或 disable rule。
+
+舉例來說有一條規則是 code 裡面不要有任何 `console.log`，
+
+但有些地方一定要存在 `console.log` 該怎麼辦呢？
+
+你可以讓 eslint ignore 掉這整個 file，不過這不是個好解法。
+
+更好的做法應該是在那幾行 code 前面加上 "inline disable" 的 comment：
+
+```js
+server.listen(8080, '0.0.0.0', (err) => {
+  /* eslint-disable no-console */
+  if (err) {
+    console.log(err);
+  }
+  console.log('Listening at http://0.0.0.0:8080/');
+  /* eslint-enable no-console */
+});
+```
+
+`/* eslint-disable no-console */`底下的 code 都會關閉 `no-console`這個規則，
+
+但`/* eslint-enable no-console */`會把 `no-console` 這個規則再次打開。
+
+兩個搭配起來的結果就是在這兩段 comment 中間的 code 不會啟用 `no-console` 這個規則。
+
 ## Extends
 
 總結上述幾點，其實 extends 這個 array 裡面放的其實是個完整的 config，
@@ -741,4 +768,8 @@ $> npm install husky --save-dev
 
 - [eslint-loader](https://github.com/MoOx/eslint-loader)
 
-> 感謝 [`@ctwu`](https://github.com/wuct) 、李俊緯 以及 Amobiz Chen 的建議
+> 感謝 [`@ctwu`](https://github.com/wuct) 、李俊緯對開發流程中整合 eslint 的建議
+
+> 感謝 Amobiz Chen 提供 `lint-staged`這個工具
+
+> 感謝陳威霖提醒我要加上 inline-disable 的用法 XD
