@@ -30,6 +30,8 @@ tags: [textmining, NLP, coursera, tf-idf]
 
 並且成為你往更深層分析研究的基石。
 
+<!-- more-->
+
 # Introduction
 
 > 這裡推薦一下大家去看吳軍教授的「數學之美」，
