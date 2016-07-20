@@ -30,12 +30,6 @@ tags: [clairvoyance, serverless, chrome-extension]
 
 其他說明的話 [ptt 上的文章](https://www.ptt.cc/bbs/Soft_Job/M.1465759641.A.E57.html)會清楚得多。
 
-
-
-![Jean Grey and Cyclops from Entertainment Weekly](http://i.imgur.com/QvYeAmN.png)
-
-> Jean Grey and Cyclops from Entertainment Weekly
-
 # 目錄
 
 - [在開始動手寫程式之前](#在開始動手寫程式之前)
@@ -53,6 +47,10 @@ tags: [clairvoyance, serverless, chrome-extension]
 - [一個軟體工作者的反思](#一個軟體工作者的反思)
 
 <!--more-->
+
+![Jean Grey and Cyclops from Entertainment Weekly](http://i.imgur.com/QvYeAmN.png)
+
+> Jean Grey and Cyclops from Entertainment Weekly
 
 求職天～眼通要做的事情很單純，
 

@@ -37,9 +37,10 @@ date: 2016-06-12 19:07:33
 
 下面來簡介一下是怎麼做出來、以及為什麼要做。
 
+<!-- more -->
+
 ![clv intro](https://raw.githubusercontent.com/abalone0204/Clairvoyance/master/static/intro.jpg)
 
-<!-- more -->
 
 # Introduction
 
