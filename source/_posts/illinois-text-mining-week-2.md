@@ -4,7 +4,8 @@ tags:
   - textmining
   - NLP
   - coursera
-  - tf-idf
+  - topic-mining
+  - PLSA
 date: 2016-07-21 16:09:00
 ---
 
