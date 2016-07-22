@@ -1163,6 +1163,22 @@ $$
 
 看看自己是不是真的懂了。
 
+最後補充一下為什麼有些東西都重複解釋，
+
+其實訊息的冗余對於保存訊息是很有意義的，
+
+當初我們有辦法解密古埃及文，
+
+就是因為羅賽塔石碑上用了三種語言重複了一樣的訊息，
+
+語言學家才能把上面的資訊解密，
+
+這裡的訊息就是對於 text mining 的知識，
+
+我相信這也是相同的道理。
+
+> [羅賽塔石碑](https://zh.wikipedia.org/wiki/%E7%BE%85%E5%A1%9E%E5%A1%94%E7%9F%B3%E7%A2%91)
+
 # References
 
 - [Coursera: Text Mining and Analytics 來自於 伊利諾伊大學香檳分校](https://www.coursera.org/learn/text-mining/home/welcome)
@@ -1172,3 +1188,5 @@ $$
 - [Lagrange 乘數法](http://episte.math.ntu.edu.tw/entries/en_lagrange_mul/)
 
 - [数学之美番外篇：平凡而又神奇的贝叶斯方法](http://mindhacks.cn/2008/09/21/the-magical-bayesian-method/)
+
+- 數學之美：《第 6 章：信息的度量和作用》
