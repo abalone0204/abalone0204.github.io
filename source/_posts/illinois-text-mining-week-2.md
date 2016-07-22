@@ -1,4 +1,4 @@
-強烈推---
+---
 title: Text Mining & Analysis： week 2
 tags:
   - textmining
