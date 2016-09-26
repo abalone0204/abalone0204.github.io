@@ -1,0 +1,291 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> CSS Modules: 模組化 CSS · De-bug: 一鍵跑版</title><meta name="description" content="CSS Modules: 模組化 CSS - Tsung-Chen Ku"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">CSS Modules: 模組化 CSS</h1><div class="post-time">Jan 9, 2016</div><div class="post-content"><p>時至今日，我最討厭的東西就是亂七八糟的 CSS 還有 KMT，</p>
+<p>這兩個東西有一點很一致：</p>
+<blockquote>
+<p>不管我們再怎麼討厭它，<br>都還是得面對它、處理它。</p>
+</blockquote>
+<h2 id="先說結論："><a href="#先說結論：" class="headerlink" title="先說結論："></a>先說結論：</h2><ul>
+<li><p>如果討厭寫 CSS，就更應該用這種方式來寫</p>
+</li>
+<li><p>我們應該用 module 化的方式來思考每個畫面上的東西</p>
+</li>
+<li><p>讓需要「工人智慧」的地方減到最少</p>
+</li>
+</ul>
+<blockquote>
+<p>「如果你覺得 CSS 很亂的話，那代表你心中沒有架構。」</p>
+</blockquote>
+<h2 id="Prerequisite"><a href="#Prerequisite" class="headerlink" title="Prerequisite"></a>Prerequisite</h2><ul>
+<li><p>會使用 webpack（幾乎只要會改 config 就行了）</p>
+</li>
+<li><p>把 CSS 當一回事的人</p>
+</li>
+</ul>
+<hr>
+<h2 id="為什麼需要去思考-CSS-的「架構」？"><a href="#為什麼需要去思考-CSS-的「架構」？" class="headerlink" title="為什麼需要去思考 CSS 的「架構」？"></a>為什麼需要去思考 CSS 的「架構」？</h2><p>曾幾何時，我也覺得 CSS 是一個他媽有夠亂七八糟的東西，</p>
+<p>直到不小心開始寫前端，我才發現前端不只是 JavaScript，</p>
+<p>從 CSS 到 html 的設計，都需要仔細去思考「架構」這件事，</p>
+<p>否則很容易讓技術債債台高築，到最後一發不可收拾。</p>
+<p>使用起來合邏輯的東西，不代表能夠用很「邏輯化」的方式寫出來，</p>
+<p>這正是 CSS 為什麼很容易亂七八糟的原因，</p>
+<p>因為我們常常需要去指定很多畫面上的細節（imperative）：</p>
+<blockquote>
+<p>「欸欸，你這邊 width 要 300px，然後 margin 要設成 0 auto 才能置中」</p>
+</blockquote>
+<p>而不是直觀的用程式碼來宣告我們想要畫面長怎樣（declarative）：</p>
+<blockquote>
+<p>「我們要一個看起來不錯的畫面」</p>
+</blockquote>
+<p>處理太多細節很容易出錯，像是螢幕或視窗大小不一樣 300px 就不一定 ok 了，</p>
+<p>而第二個 declarative way 似乎又太過理想化。</p>
+<p>而我認為折衷的方式就是 module 化 CSS，</p>
+<p>雖然也需要去實作 module 內的細節（imperative），</p>
+<p>但完成之後，就可以將這些 module 組裝起來，</p>
+<p>重複使用時就不需要去實做那麼多的細節，</p>
+<p>沒錯，我們又往 declarative programming更進一步了。</p>
+<p>現在看起來還是比較 high level 的概念，</p>
+<p>但我認為知道為什麼要這樣做很重要，</p>
+<p>稍後會在例子裏看到這樣做的好處是什麼。</p>
+<hr>
+<p>在開始之前先講解一下兩個會推薦使用的工具，</p>
+<p>（你也可以依自己喜歡的配置啦！）</p>
+<p>分別是 Autoprefixer 以及 PostCSS。</p>
+<h2 id="Autoprefixer"><a href="#Autoprefixer" class="headerlink" title="Autoprefixer"></a>Autoprefixer</h2><p>假如熟悉 postcss 和 autoprefixer 在幹嘛的人可以直接跳下一段了。</p>
+<p>其實我們平常在寫 CSS 的時候，為了處理跨瀏覽器的問題，</p>
+<p>常常需要寫很噁心的 prefix，</p>
+<p>就算有 SASS 的 include 語法，prefix 還是很噁心。</p>
+<p>看到 autoprefixer 出現真是讓人痛哭流涕的一件事，</p>
+<p>因為這代表以後有人會幫我們處理好 prefix，</p>
+<p>同時還會把太舊的 prefix 給移除掉。（像是 <code>border-radius</code>）</p>
+<p>這裏就直接來安裝進專案吧！</p>
+<p><code>webpack.config.js</code></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> autoprefixer = <span class="built_in">require</span>(<span class="string">'autoprefixer'</span>);</div><div class="line"></div><div class="line"><span class="built_in">module</span>.exports = &#123;</div><div class="line">    <span class="built_in">module</span>: &#123;</div><div class="line">        loaders: [</div><div class="line">            &#123;</div><div class="line">                test:   <span class="regexp">/\.css$/</span>,</div><div class="line">                loader: <span class="string">"style-loader!css-loader!postcss-loader"</span></div><div class="line">            &#125;</div><div class="line">        ]</div><div class="line">    &#125;,</div><div class="line">    postcss: [ autoprefixer(&#123; browsers: [<span class="string">'last 2 versions'</span>] &#125;) ]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>唯一需要說明一下的就是可以指定我們要 support 到多老舊的 browser啦！</p>
+<p>就這樣，恭喜你！</p>
+<hr>
+<h2 id="PostCSS"><a href="#PostCSS" class="headerlink" title="PostCSS"></a>PostCSS</h2><p>PostCSS 是一個可以用 JavaScript plugins 將 style 轉成我們想要樣子的工具。</p>
+<p>（包括 lint, variables, mixins，以及好多東西……）</p>
+<p>確切一點來說， PostCSS 是一個 node.js 的 package，</p>
+<p>它可以將我們原本的 CSS 檔案轉成 AST(Abstraction Syntax Tree)，</p>
+<p>接著我們就可以藉由這個 API 來對 CSS 做事情，</p>
+<p>做完後再將它轉成 String，輸出成我們想要的 CSS，</p>
+<p>如果你懶得自己寫 plugin 來處理也不用擔心，</p>
+<p>現在已經有兩百多個 plugins 在那裡等你愛智求真了。</p>
+<p>我知道一定有人這時候在想：「那 SASS 呢？」</p>
+<p>沒錯，這兩者看起來似乎有點像，不過可以先看一下這篇文章：</p>
+<ul>
+<li><a href="http://davidtheclark.com/excited-about-postcss/" target="_blank" rel="external">I’m Excited About PostCSS But I’m Scared to Leave Sass</a></li>
+</ul>
+<p>這裏則是值得一看的補充資料，其實官方的 readme 裏也都有寫：</p>
+<ul>
+<li><p><a href="http://webdesign.tutsplus.com/series/postcss-deep-dive--cms-889" target="_blank" rel="external">tut+的教學</a></p>
+</li>
+<li><p><a href="http://nicolasgallagher.com/custom-css-preprocessing/" target="_blank" rel="external">一個前端用 node.js 來寫 CSS 的 preprocessor 也是很正常的事</a></p>
+</li>
+</ul>
+<p>簡言之，PostCSS 跟 SASS 或 LESS 最不一樣的點是：</p>
+<p>「我們可以只採用我們想要的部分，並將其組裝起來。」</p>
+<p>這不就是 Compoasable 和模組化嗎？</p>
+<p>接著就來看看如何在 webpack 中設定 postcss，</p>
+<p>和使用各種 plugins。</p>
+<p>（坦白說這裏才是最頭痛的部分）</p>
+<p>使用 webpack 雖然簡單，但 config 的寫法太雜亂了，</p>
+<p>完成同樣一件事可以有好幾種方法，</p>
+<p>目前連官方文件上也沒有一個一致的 best practice。</p>
+<p>而<a href="https://github.com/ruanyf/webpack-demos" target="_blank" rel="external">阮義峰的這篇教學</a>是我目前看過寫的最清楚易懂的，</p>
+<p>從 entry 到跟 react 一起使用都有說到。</p>
+<hr>
+<h2 id="CSS-modules"><a href="#CSS-modules" class="headerlink" title="CSS modules"></a>CSS modules</h2><p>假如你直接跳過前兩個工具，其實也是 ok 啦！</p>
+<p>因為 webpack 的 css-loader 本身就內建 module 功能：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="built_in">module</span>: &#123;</div><div class="line">        loaders: [&#123;</div><div class="line">            test: <span class="regexp">/\.[s]?css$/</span>,</div><div class="line">            loader: <span class="string">'style!css?modules!sass'</span></div><div class="line">        &#125;]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>現在終於要來講一下 CSS modules 可以做到什麼事情。</p>
+<ul>
+<li>組合（Composition）</li>
+</ul>
+<p>我們能夠將 selector 組合在一起</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="selector-class">.className</span> &#123;</div><div class="line">  <span class="attribute">color</span>: green;</div><div class="line">  <span class="attribute">background</span>: red;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="selector-class">.otherClassName</span> &#123;</div><div class="line">  <span class="attribute">composes</span>: className;</div><div class="line">  <span class="attribute">color</span>: yellow;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這裏要注意的是 composes 必須寫在其他 properties 的前面。</p>
+<p>而我們也可以 compose 多個 className：</p>
+<p><code>composes: classNameA classNameB;</code></p>
+<p>乍看之下跟 SASS 的 extend 有點像，</p>
+<p>但讓我們繼續看下去。</p>
+<h2 id="Dependencies"><a href="#Dependencies" class="headerlink" title="Dependencies"></a>Dependencies</h2><p>假設我們現在有另一個檔案: style.css</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">.className &#123;</div><div class="line">    // some style</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="selector-class">.otherClassName</span> &#123;</div><div class="line">  <span class="attribute">composes</span>: className from <span class="string">"./style.css"</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這給了我們很大的彈性，但小心不要 override properties，</p>
+<p>我覺得官方文件的這一句話寫得很棒：</p>
+<blockquote>
+<p>Best if classes do a single thing and dependencies are hierarchic.</p>
+</blockquote>
+<p>這的確是我們在設計 CSS module 時，要常存心中的一句話。</p>
+<h2 id="Usage-with-preprocessors"><a href="#Usage-with-preprocessors" class="headerlink" title="Usage with preprocessors"></a>Usage with preprocessors</h2><p>這裏主要是說要如何運用 preprocessor ，</p>
+<p>因為我們有時候還是需要 global 的 class。</p>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="selector-pseudo">:global</span> &#123;</div><div class="line">  <span class="selector-class">.global-class-name</span> &#123;</div><div class="line">    <span class="attribute">color</span>: green;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<hr>
+<h2 id="Rewrite-with-CSS-Modules"><a href="#Rewrite-with-CSS-Modules" class="headerlink" title="Rewrite with CSS Modules"></a>Rewrite with CSS Modules</h2><p>如果你是打從專案一開始就使用 css module ，</p>
+<p>那恭喜你！</p>
+<p>但「通常」現有的專案上都是用 SASS 來解決，</p>
+<p>這裡就以我工作上的專案來做例子。</p>
+<p>這裏要提一下我們後端用的是 Rails，</p>
+<p>Rails 有個邪惡的好東西叫做 <a href="https://ihower.tw/rails4/assets-pipeline.html" target="_blank" rel="external">Asset Pipeline</a>，</p>
+<p>它會將靜態資源壓成一個檔案，減少 request 數。</p>
+<p>自動幫你做這件事聽起來很美好，</p>
+<p>但實際上因為 css 有 global scope 的問題，</p>
+<p>所以要怎麼確保每一頁只 load 到自己要的 style 呢？</p>
+<p>我的做法是每一頁會有一個專屬的 id，</p>
+<p>而命名的方式就是以 controller 加上 action 的名稱來命名。</p>
+<p>像是 posts_controller 的首頁，</p>
+<p>我就會給它專屬的一支檔案<code>posts_index.scss</code></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">#posts_index &#123;</div><div class="line">    // some style</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這樣做的第一個好處很明顯，</p>
+<p>就是每個頁面裡的樣式就只會影響 id 裡的 scope。</p>
+<p>那說好的 module 呢？</p>
+<p>這裏就要用到 SASS 的 <code>extend</code>，</p>
+<p>假設 posts 和 show 都有一模一樣的 header，</p>
+<p>這時候我就會把 header 抽出來像下面這樣：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">%header &#123;</div><div class="line">    header &#123;</div><div class="line">        //  some style</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">import "./header.scss";</div><div class="line"></div><div class="line">#posts_index &#123;</div><div class="line">    @extend %header;</div><div class="line">    // some style</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">import "./header.scss";</div><div class="line"></div><div class="line">#posts_show &#123;</div><div class="line">    @extend %header;</div><div class="line">    // some style</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>看起來挺方便，</p>
+<p>而且 Rails 的 routing 通常都是 restful 的，</p>
+<p>所以理論上這樣 CSS 的名字也有一定的規則可循，</p>
+<p>不會找不到檔案在哪裡。</p>
+<p>（就算有自動搜尋，也要知道下哪些關鍵字吧！）</p>
+<p>但，</p>
+<p>如果今天根據 user 的身份不同，</p>
+<p>會 render 不一樣的頁面呢？</p>
+<p><code>#posts_index_super_user</code>？</p>
+<p>沒錯，問題又變得開始複雜起來，</p>
+<p>原因就出在它仍然是 global scope，</p>
+<p>而我試圖想從命名來解決這件事情，</p>
+<p>我常常在想：「啊！如果 CSS 是 local scope該有多好？」</p>
+<blockquote>
+<p>A CSS Module is a CSS file in which all class names and animation names are scoped locally by default.</p>
+</blockquote>
+<p>天啊！這解決了根本上的問題！</p>
+<p>假如能夠用 component-based 的方式來思考，</p>
+<p>讓 react component 從 css module 之間有對應的 name 來讀取樣式，</p>
+<p>那不就更棒了嗎？</p>
+<p>以後的資料夾結構會長這樣子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">├── components</div><div class="line">│   ├── ui-App</div><div class="line">│   │   ├── index.css</div><div class="line">│   │   └── index.js</div><div class="line">│   ├── ui-Avatar</div><div class="line">│   │   ├── index.css</div><div class="line">│   │   └── index.js</div><div class="line">│   └── ui-Profile</div><div class="line">│       ├── fonts</div><div class="line">│       │   └── opensans-regular-webfont.woff</div><div class="line">│       ├── images</div><div class="line">│       │   └── icon-user.png</div><div class="line">│       ├── index.css</div><div class="line">│       └── index.js</div><div class="line">└── styles</div><div class="line">    ├── base.css</div><div class="line">    └── theme.css</div></pre></td></tr></table></figure>
+<p>一個資料夾底下就放著 component.js, component.css，</p>
+<p>本身就是一個 micro-service，</p>
+<p>而我們要做的正是把這些 micro-service 給組裝起來變成一個頁面，</p>
+<p>最後再把這些頁面組裝起來變成 Application，相當舒服。</p>
+<p>不過要如何從現有的專案改寫呢？</p>
+<p>這裏就拿這個小小的部落格來舉例，</p>
+<p>因為我一開始是用<a href="https://github.com/abalone0204/generator-suku" target="_blank" rel="external">自己寫的 generator</a> 生成專案，</p>
+<p>（小打一下廣告，</p>
+<p>平常開發前端 component 就是在這個生成的專案上開發，</p>
+<p>弄好 react 和 hmr 之後，其實蠻方便的。）</p>
+<p>順帶一提，這是開始改寫前的樣子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">stylesheets/</div><div class="line">    ├── animations</div><div class="line">    │   ├── blink.scss</div><div class="line">    │   ├── loading.scss</div><div class="line">    │   └── spins.scss</div><div class="line">    ├── code_highlights</div><div class="line">    │   └── default.scss</div><div class="line">    ├── colors.scss</div><div class="line">    ├── components</div><div class="line">    │   ├── Nav</div><div class="line">    │   │   └── _icon_bar.css</div><div class="line">    │   └── common</div><div class="line">    │       └── loading.scss</div><div class="line">    ├── nav.scss</div><div class="line">    ├── pages</div><div class="line">    │   ├── about.scss</div><div class="line">    │   ├── home.scss</div><div class="line">    │   └── post.scss</div><div class="line">    └── style.scss</div></pre></td></tr></table></figure>
+<p>到最後 stylesheets 裡面只會剩下 global 的 css 檔案，</p>
+<p>像是 base.css 或是 theme.css 。</p>
+<p>首先第一步當然就是處理 global 的 css，</p>
+<p>思考的方向很簡單，就是哪些東西是每一個頁面都用得到的呢？</p>
+<p>所以我們把 body, a, h1~h5之類的東西先拔出來：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">:global &#123;</div><div class="line">    a &#123;</div><div class="line">        color: inherit;</div><div class="line">        text-decoration: none;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    body &#123;</div><div class="line">        margin: 0;</div><div class="line">        letter-spacing: 1px;</div><div class="line">        color: #23263a;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    * &#123;</div><div class="line">        font-family: 'Noto Sans TC',Microsoft JhengHei,Microsoft YaHei, LiHei Pro, Heiti TC, sans-serif;</div><div class="line">        font-weight: 200;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    .wf-loading &#123;</div><div class="line">        * &#123;</div><div class="line">            font-family: Microsoft JhengHei, Microsoft YaHei, LiHei Pro, Heiti TC, sans-serif;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        font-family: Microsoft JhengHei, Microsoft YaHei, LiHei Pro, Heiti TC, sans-serif;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接著來處理我們的 Nav bar，</p>
+<p>從這裡開始，就要進入 module 化的思考方式，</p>
+<p>一開始的時候你可能會覺得，欸？幹嘛這樣做？</p>
+<p>但越到後面你會發現一旦你習慣這樣思考，</p>
+<p>很多原本難解的問題都會迎刃而解，</p>
+<p>尤其是用組裝的方式來思考畫面的元件，</p>
+<p>能讓多狀態的呈現變得更簡單，</p>
+<p>也更能明白哪個部分該抽象化出來變成 base。</p>
+<p>先來看看這個 Nav 的例子。</p>
+<hr>
+<p>預計會在以下幾個步驟循序漸進地去思考如何去寫 CSS Modules：</p>
+<ul>
+<li><p>讀一下舊有的 js, css</p>
+</li>
+<li><p>最外層的 global selector</p>
+</li>
+<li><p>沒有狀態改變的 local selector</p>
+</li>
+<li><p>有狀態改變的 local selector</p>
+</li>
+</ul>
+<h3 id="1-分析舊有的-js-css"><a href="#1-分析舊有的-js-css" class="headerlink" title="1. 分析舊有的 js, css"></a>1. 分析舊有的 js, css</h3><figure class="highlight jsx"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Container</span> <span class="keyword">extends</span> <span class="title">Component</span> </span>&#123;</div><div class="line">    <span class="keyword">constructor</span>(props) &#123;</div><div class="line">        <span class="keyword">super</span>(props);</div><div class="line">        <span class="keyword">this</span>.state = &#123;show: <span class="literal">false</span>&#125;;</div><div class="line">        <span class="keyword">this</span>.toggleIcon = <span class="keyword">this</span>.toggleIcon.bind(<span class="keyword">this</span>);</div><div class="line">    &#125;</div><div class="line">    toggleIcon() &#123;</div><div class="line">        <span class="keyword">this</span>.setState(&#123;show: !<span class="keyword">this</span>.state.show&#125;)</div><div class="line">    &#125;</div><div class="line">    render() &#123;</div><div class="line">        <span class="keyword">let</span> &#123;show&#125; = <span class="keyword">this</span>.state;</div><div class="line">        <span class="keyword">let</span> className = show ? <span class="string">"active"</span> : <span class="string">""</span>;</div><div class="line">        <span class="keyword">return</span> (</div><div class="line">            &lt;nav&gt;</div><div class="line">                &lt;div id="logo" className=&#123;className&#125;/&gt;</div><div class="line">                &lt;div id="toggle_icon" </div><div class="line">                     className=&#123;className&#125;</div><div class="line">                     onClick=&#123;this.toggleIcon&#125;</div><div class="line">                /&gt;</div><div class="line">                &#123;</div><div class="line">                    show ? </div><div class="line">                    (</div><div class="line">                        &lt;ul id="nav_list" className=&#123;className&#125;&gt;</div><div class="line">                            &lt;li&gt;&lt;Link to="/about"&gt;About&lt;/Link&gt;&lt;/li&gt;</div><div class="line">                            &lt;li&gt;&lt;i className="fa fa-github-alt"&gt;&lt;/i&gt;&lt;/li&gt;</div><div class="line">                            &lt;li&gt;&lt;i className="fa fa-facebook"&gt;&lt;/i&gt;&lt;/li&gt;</div><div class="line">                        &lt;/ul&gt;</div><div class="line">                    ) :</div><div class="line">                    null</div><div class="line">                &#125;</div><div class="line">            &lt;/nav&gt;</div><div class="line">            )</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到我們的 toggle_icon 會隨著 show 的值而改變樣式，</p>
+<p>至於怎樣改變？就來看看原先架構下的 CSS 怎麼寫。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div></pre></td><td class="code"><pre><div class="line">@import "./colors.scss";</div><div class="line">@import "./components/Nav/icon_bar";</div><div class="line"></div><div class="line">nav &#123;</div><div class="line">    position: fixed;</div><div class="line">    z-index: 5;</div><div class="line">    top: 0;</div><div class="line">    width: 100%;</div><div class="line">    color: white;</div><div class="line">    background: $deep_blue;</div><div class="line">    padding: 14px;</div><div class="line">    height: 28px;</div><div class="line"></div><div class="line">    a &#123;</div><div class="line">        color: inherit;</div><div class="line">        text-decoration: none;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    #logo &#123;</div><div class="line">        height: 28px;</div><div class="line">        width: 28px;</div><div class="line">        display: inline-block;</div><div class="line">        background-image: url("../img/icon.png");</div><div class="line">        background-size: cover;</div><div class="line">        transition: transform 1s ease;</div><div class="line"></div><div class="line">        &amp;:hover &#123;</div><div class="line">            animation: shake;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    #logo.active &#123;</div><div class="line">        color: $sudo_green;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    #toggle_icon &#123;</div><div class="line">        position: absolute;</div><div class="line">        top: 50%;</div><div class="line">        transform: translateY(-50%);</div><div class="line">        right: 50px;</div><div class="line">        display: inline-block;</div><div class="line"></div><div class="line">        @extend %icon_bar;</div><div class="line"></div><div class="line">        cursor: pointer;</div><div class="line"></div><div class="line">        &amp;:before,</div><div class="line">        &amp;:after &#123;</div><div class="line">            @extend %icon_bar;</div><div class="line"></div><div class="line">            content: '';</div><div class="line">            display: block;</div><div class="line">            position: absolute;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        &amp;:before &#123;</div><div class="line">            margin-top: -10px;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        &amp;:after &#123;</div><div class="line">            margin-top: 10px;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    #toggle_icon.active &#123;</div><div class="line">        background: transparent;</div><div class="line">        transition-property: background-color, transform;</div><div class="line">        transition-duration: .2s;</div><div class="line"></div><div class="line">        &amp;:before, &amp;:after &#123;</div><div class="line">            background: $sudo_green;</div><div class="line">            transition-property: background-color, transform;</div><div class="line">            transition-duration: .2s;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        &amp;:before &#123;</div><div class="line">            transform: rotate(45deg);</div><div class="line">            transform-origin: 0 0;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        &amp;:after &#123;</div><div class="line">            transform: rotate(-45deg);</div><div class="line">            transform-origin: 0 5px;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    #nav_list &#123;</div><div class="line">        position: fixed;</div><div class="line">        height: 100vh;</div><div class="line">        background: #23263a;</div><div class="line">        text-align: center;</div><div class="line">        top: 56px;</div><div class="line">        left: 0;</div><div class="line">        display: block;</div><div class="line">        padding: 5px 15px;</div><div class="line">        margin: 0;</div><div class="line"></div><div class="line">        li &#123;</div><div class="line">            display: block;</div><div class="line">            padding: 5px;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<hr>
+<h2 id="2-最外層的-global-selector"><a href="#2-最外層的-global-selector" class="headerlink" title="2. 最外層的 global selector"></a>2. 最外層的 global selector</h2><p>如果你有寫過 react native 的話，</p>
+<p>就能體會到 style object 的好處，</p>
+<p>假如沒有，那現在這是好好來玩玩看的時候。</p>
+<p>我們從最外層開始拆解。</p>
+<p>（其實由內而外、由外而內各有好壞，但這可能又要寫另外一篇了）</p>
+<p>最外層的當然就是原生的 nav tag，</p>
+<p>這裏其實大可直接給他 global</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">:global &#123;</div><div class="line">    nav &#123;</div><div class="line">        position: fixed;</div><div class="line">        z-index: 5;</div><div class="line">        top: 0;</div><div class="line">        width: 100%;</div><div class="line">        color: white;</div><div class="line">        background: #23263a;</div><div class="line">        padding: 14px;</div><div class="line">        height: 28px;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<hr>
+<h2 id="3-沒有狀態改變的-local-selector"><a href="#3-沒有狀態改變的-local-selector" class="headerlink" title="3. 沒有狀態改變的 local selector"></a>3. 沒有狀態改變的 local selector</h2><p>往下看到 logo ：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="selector-class">.logo</span> &#123;</div><div class="line">    <span class="attribute">height</span>: <span class="number">28px</span>;</div><div class="line">    <span class="attribute">width</span>: <span class="number">28px</span>;</div><div class="line">    <span class="attribute">display</span>: inline-block;</div><div class="line">    <span class="attribute">background-image</span>: <span class="built_in">url</span>(<span class="string">"../../../static/img/icon.png"</span>);</div><div class="line">    <span class="attribute">background-size</span>: cover;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>要怎麼 import 它呢？</p>
+<p>首先別忘記在 webpack 的 config 裡開啟 css modules 的功能。</p>
+<p>再來只要這樣：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> style <span class="keyword">from</span> <span class="string">"./Nav.scss"</span>;</div><div class="line"></div><div class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="class"><span class="keyword">class</span> <span class="title">Nav</span> <span class="keyword">extends</span> <span class="title">Component</span> </span>&#123;</div><div class="line">    render()&#123;</div><div class="line">       <span class="keyword">return</span> ( </div><div class="line">           ...</div><div class="line">           &lt;div className=&#123;style.logo&#125;/&gt;</div><div class="line">           ...</div><div class="line">       )</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>style.logo</code> 讀到的就會是 webpack 幫我們生成的唯一字串，</p>
+<p>不用擔心會跟其他 class 重複，不相信的話 console.log 看一下，</p>
+<p>而跟以往相同，webpack 也會自動去幫我們寫入 style 到 head 裡面，</p>
+<p>對應到的 class name 就是剛剛生成的唯一字串。</p>
+<p>原理大概是這樣子。</p>
+<hr>
+<h3 id="4-有狀態改變的-local-selector"><a href="#4-有狀態改變的-local-selector" class="headerlink" title="4. 有狀態改變的 local selector"></a>4. 有狀態改變的 local selector</h3><p>再來則是為什麼我仍然使用 SASS 的原因： extend</p>
+<p>來看看 toggle_icon，他就是我們平常看到手機版的選單，</p>
+<p>按了之後會變形。</p>
+<p>先直接看它原本的 CSS 長怎樣：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">#toggle_icon &#123;</div><div class="line">    position: absolute;</div><div class="line">    top: 50%;</div><div class="line">    transform: translateY(-50%);</div><div class="line">    right: 50px;</div><div class="line">    display: inline-block;</div><div class="line">    @extend %icon_bar;</div><div class="line">    cursor: pointer;</div><div class="line">    &amp;:before,</div><div class="line">    &amp;:after &#123;</div><div class="line">        @extend %icon_bar;</div><div class="line">        content: '';</div><div class="line">        display: block;</div><div class="line">        position: absolute;</div><div class="line">    &#125;</div><div class="line">    &amp;:before &#123;</div><div class="line">        margin-top: -10px;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    &amp;:after &#123;</div><div class="line">        margin-top: 10px;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>我知道有一些 PostCSS 的插件可以解決，<br>但這篇的重點在於模組化 CSS 的思考，所以就暫時先擱著啦！）</p>
+</blockquote>
+<p>因為那個 icon 有三個橫條，每個橫條的設定都差不多，</p>
+<p>所以我寫了一個 icon_bar 來被 extend。</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">%<span class="selector-tag">icon_bar</span> &#123;</div><div class="line">    <span class="attribute">width</span>: <span class="number">30px</span>;</div><div class="line">    <span class="attribute">height</span>: <span class="number">5px</span>;</div><div class="line">    <span class="attribute">transition-property</span>: background-color, transform;</div><div class="line">    <span class="attribute">transition-duration</span>: .<span class="number">2s</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接著則是重頭戲，</p>
+<p>對於畫面來說，這個 toggle_icon 會有兩個狀態，</p>
+<p>也就是說我們會有兩個 class 來處理它，</p>
+<p>但這兩個狀態又有許多共同點，怎麼辦呢？</p>
+<p>答案很簡單：</p>
+<blockquote>
+<p>抽出來當 base，讓兩個狀態的 class 去 composes 這個 base 就好啦！</p>
+</blockquote>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">.toggle_icon_base &#123;</div><div class="line">    @extend %icon_bar;</div><div class="line">    position: absolute;</div><div class="line">    top: 50%;</div><div class="line">    transform: translateY(-50%);</div><div class="line">    right: 50px;</div><div class="line">    display: inline-block;</div><div class="line">    cursor: pointer;</div><div class="line">    transition-property: background-color, transform;</div><div class="line">    transition-duration: .2s;</div><div class="line">    &amp;:before,</div><div class="line">    &amp;:after &#123;</div><div class="line">        // pseudo-selector 是不能使用 composes 的</div><div class="line">        // 這就是為什麼我仍需要 @extend</div><div class="line">        @extend %icon_bar; </div><div class="line">        content: '';</div><div class="line">        display: block;</div><div class="line">        position: absolute;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    &amp;:before &#123;</div><div class="line">        margin-top: -10px;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    &amp;:after &#123;</div><div class="line">        margin-top: 10px;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這裏抽出來的就是兩方都不會變的 properties，</p>
+<p>把 transition 放在 base 裏的好處就是能看到狀態之間的變化，</p>
+<p>這樣能實現一些簡單的動畫。</p>
+<p>接著就是把我們寫好的 base 組裝起來而已，</p>
+<p>toggle_icon！附身合體！</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">.toggle_icon &#123;</div><div class="line">    composes: toggle_icon_base; // 記得要放在其他 properties 前面</div><div class="line">    background-color: white;</div><div class="line"></div><div class="line">    &amp;:before,</div><div class="line">    &amp;:after &#123;</div><div class="line">        background-color: white;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    &amp;:hover &#123;</div><div class="line">        background-color: #50e2c2;</div><div class="line"></div><div class="line">        &amp;:before,</div><div class="line">        &amp;:after &#123;</div><div class="line">            background-color: #50e2c2;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>狀態的改變每個人都有自己喜好的方式，可以自行調整：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">.toggle_icon--active &#123;</div><div class="line">    composes: toggle_icon_base;</div><div class="line">    background: transparent;</div><div class="line">    </div><div class="line"></div><div class="line">    &amp;:before, &amp;:after &#123;</div><div class="line">        background: #50e2c2;</div><div class="line">        transition-property: background-color, transform;</div><div class="line">        transition-duration: .2s;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    &amp;:before &#123;</div><div class="line">        transform: rotate(45deg);</div><div class="line">        transform-origin: 0 0;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    &amp;:after &#123;</div><div class="line">        transform: rotate(-45deg);</div><div class="line">        transform-origin: 0 5px;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>而 component 中該如何對應呢？</p>
+<figure class="highlight jsx"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Nav</span> <span class="keyword">extends</span> <span class="title">Component</span> </span>&#123;</div><div class="line">    render() &#123;</div><div class="line">        <span class="keyword">return</span> (</div><div class="line">        ...</div><div class="line">        &lt;div className=&#123;show ? style[<span class="string">"toggle_icon--active"</span>] : style.toggle_icon&#125;</div><div class="line">              onClick=&#123;<span class="keyword">this</span>.toggleIcon&#125;</div><div class="line">        /&gt;</div><div class="line">        ...</div><div class="line">        );</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>沒錯，就是這麼簡單而已。</p>
+<h1 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h1><p>回頭看看重構後的 CSS，</p>
+<p>你會發現我們已經不是昔日把所有東西都丟在越來越多層的 class 裡面，</p>
+<p>而是變成扁平且一塊一塊的了，</p>
+<p>如果要重構的話我們也能夠將重複的部分抽出來。</p>
+<p>再來更棒的是除了 global 的地方，</p>
+<p>我們不用再擔心全域命名污染的問題，</p>
+<p>畢竟沒有 import 到的 class 就永遠不會發生作用啊！</p>
+<p>如果有寫錯的地方或是建議，很歡迎留言告訴我。</p>
+<p>我真的最討厭寫 CSS 了。</p>
+<h2 id="參考連結："><a href="#參考連結：" class="headerlink" title="參考連結："></a>參考連結：</h2><ul>
+<li><p><a href="https://github.com/css-modules/css-modules" target="_blank" rel="external">css module</a></p>
+</li>
+<li><p><a href="https://github.com/postcss/autoprefixer" target="_blank" rel="external">autoprefixer</a></p>
+</li>
+<li><p><a href="http://simonsmith.io/using-webpack-to-build-react-components-and-their-assets/" target="_blank" rel="external">Using webpack to build React components and their assets</a></p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/01/18/way-to-fed/" class="prev">PREV</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/01/09/css-modules/';
+var disqus_title = 'CSS Modules: 模組化 CSS';
+var disqus_url = 'http://abalone0204.github.com/2016/01/09/css-modules/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> Clairvoyance 是怎麼開發的 · De-bug: 一鍵跑版</title><meta name="description" content="Clairvoyance 是怎麼開發的 - Tsung-Chen Ku"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">Clairvoyance 是怎麼開發的</h1><div class="post-time">Jun 12, 2016</div><div class="post-content"><p>我寫了一個 chrome 的插件，</p>
+<p>能夠讓求職者在人力銀行的職缺下面留言討論。</p>
+<p>聽起來是很平常的需求，不過各大人力銀行就是不做這個功能，</p>
+<p>所以我想看看假如有這個功能會不會對求職有正向的幫助。</p>
+<p>下載的連結在這裡： <a href="https://chrome.google.com/webstore/detail/clairvoyance-%E6%B1%82%E8%81%B7%E5%A4%A9%E7%9C%BC%E9%80%9A/mdneakdlnoidknagkamfeambdefhppbi?hl=zh-TW&amp;gl=TW" target="_blank" rel="external">Clairvoyance - 求職天眼通</a></p>
+<p>目前還在 beta 階段，可能會有些 bug，</p>
+<p>可以到<a href="https://www.facebook.com/Clairvoyance-%E6%B1%82%E8%81%B7%E5%A4%A9%E7%9C%BC%E9%80%9A-1084564708284768" target="_blank" rel="external">粉絲頁</a>留言，</p>
+<p>或是在 <a href="https://github.com/abalone0204/Clairvoyance" target="_blank" rel="external">github</a> 上直接發 issue。</p>
+<p>下面就來筆記一下為什麼要做這件事，以及怎麼做到的。</p>
+<p>用的技術就是以下列的這些</p>
+<ul>
+<li><p>front-end: reactjs、redux、redux-saga</p>
+</li>
+<li><p>back-end: aws-lambda, dynamodb, serverless-framework</p>
+</li>
+</ul>
+<blockquote>
+<p>目前只支援 104 和 1111，至於 yes123，後面會再提到為什麼暫時沒做。</p>
+</blockquote>
+<p>下面來簡介一下是怎麼做出來、以及為什麼要做。</p>
+<a id="more"></a>
+<p><img src="https://raw.githubusercontent.com/abalone0204/Clairvoyance/master/static/intro.jpg" alt="clv intro"></p>
+<h1 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h1><p>為什麼要做這件事情？</p>
+<p>其實我比較想問的問題是：為什麼不要做這件事情呢？</p>
+<p>我們買商品的時候，在拍賣網站上就可以看到買家對店家的評價、對商品的評價，</p>
+<p>而求職的時候，卻一定要到其他討論區、其他網站，</p>
+<p>才能看到其他人對於該職缺或公司的評價，</p>
+<p>這其實是一件很不自然的事情，</p>
+<p>再說種種擔心對手黑函還是求職者亂抹黑什麼的，</p>
+<p>嗯⋯⋯電商其實也會遇到這樣的事情，</p>
+<p>總之想不到一個很合理的解釋，</p>
+<p>唯一能想得到的解釋就是<strong>「盈利模式」</strong>。</p>
+<p>目前我們在人力銀行上找工作，其實是不用付錢的，</p>
+<p>但是企業卻是要付費用才能張貼職缺。</p>
+<p>合理的推斷，</p>
+<p>其實我們這些求職方就是人力銀行的商品，</p>
+<p>真正的使用者是那些企業用戶（資方），</p>
+<p>而讓使用者能夠留言討論的功能，</p>
+<p>可能會讓部分企業用戶不想使用。</p>
+<blockquote>
+<p>看看各大人力銀行上，許多職缺都喜歡「面議」</p>
+<p>就知道資訊不對稱對於資方來說是一件多麼正常的事情</p>
+<p>我不會認為敘薪是簡單的，</p>
+<p>但給個底價，避免浪費彼此時間這件事，</p>
+<p>真心不應該難道哪裡去。</p>
+<p>否則騙人去面試的行為，其實跟詐騙集團一樣可恥</p>
+</blockquote>
+<p>無論背後的動機是什麼，</p>
+<p>既然人力銀行有其考量不做這件事、我又認為有需要的話，</p>
+<p>那與其動嘴巴抱怨台灣的求職平台不好用，</p>
+<p>不如自己來做做看，看能不能為台灣險峻的就業環境帶來一些幫助。</p>
+<blockquote>
+<p>在做這個 side project 之前，</p>
+<p>其實我自己找工作從來都沒有用過各大人力銀行，</p>
+<p>這次還花蠻多時間在探究自己到底為什麼不用這些平台，</p>
+<p>以及他們到底缺少了什麼。</p>
+</blockquote>
+<h1 id="What-is-clairvoyance"><a href="#What-is-clairvoyance" class="headerlink" title="What is clairvoyance"></a>What is clairvoyance</h1><p>為什麼是這個名字？ </p>
+<p>命名一直是蠻困難的一件事情，</p>
+<p>本來有想過要叫什麼 job-bar in in der。</p>
+<p>不過後來還是靈光一現跑出這個單字：</p>
+<p>Clairvoyance。</p>
+<p>為什麼要取這個名字有兩個版本的故事：</p>
+<h2 id="高級版本"><a href="#高級版本" class="headerlink" title="高級版本"></a>高級版本</h2><p>Clairvoyance，可以翻作洞察力或是透視，</p>
+<p>主要是希望透過求職者彼此分享經驗，</p>
+<p>來透視一個職缺的好壞，或是否適合他。</p>
+<h2 id="真實版本"><a href="#真實版本" class="headerlink" title="真實版本"></a>真實版本</h2><p>其實就是 google 天眼通，</p>
+<p>翻譯的第一個單字就是 Clairvoyance，</p>
+<p>然後我蠻喜歡周星馳的賭聖，所以就這樣命名了。</p>
+<h1 id="Why-is-Clairvoyance"><a href="#Why-is-Clairvoyance" class="headerlink" title="Why is Clairvoyance"></a>Why is Clairvoyance</h1><p>其實會做這個 project ，</p>
+<p>有一部分是因為自己最近開始接觸分散式運算，</p>
+<p>開始了解去中心化的想法，</p>
+<p>我認為與其把所有對平台上職缺的評論給「集中」起來，</p>
+<p>不如將它分散到各自原本的職缺下方，</p>
+<p>然後再將相同職缺的評論同步。（Consistency）</p>
+<p>這樣的做法是更合理，而且使用起來更有效率的。</p>
+<h1 id="Architecture"><a href="#Architecture" class="headerlink" title="Architecture"></a>Architecture</h1><blockquote>
+<p>假如說一開始我知道會這麼搞剛的話，</p>
+<p>應該就會放棄了⋯⋯</p>
+</blockquote>
+<p>整個 project 主要分成三塊：</p>
+<ul>
+<li><p><a href="https://github.com/abalone0204/Clairvoyance" target="_blank" rel="external">gui</a>：Chrome extension 的 UI</p>
+</li>
+<li><p><a href="https://github.com/abalone0204/serverless-clairvoyance" target="_blank" rel="external">serverless-clv-backend</a></p>
+<ul>
+<li>處理後端的資料</li>
+</ul>
+</li>
+<li><p><a href="https://github.com/abalone0204/serverless-clv-oauth" target="_blank" rel="external">serverless-clv-auth</a></p>
+<ul>
+<li><p>問題：chrome 的插件是明碼的，假如要在上面做認證，就要在 chrome 上面直接放 secret key，這樣做一點都不 secret</p>
+</li>
+<li><p>解法：開了一個 serverless 的 api 專門來做這件事情，在 repo 的 README 裡面蠻詳細的紀錄如何做到，所以這篇裡面不會贅述這一點。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>這裡畫了個很粗略的圖，看一下會比較有概念：</p>
+<blockquote>
+<p>clv = clairvoyance</p>
+</blockquote>
+<p><img src="https://raw.githubusercontent.com/abalone0204/Clairvoyance/master/clv-arc.png" alt="clv arc"></p>
+<p>其實 backend 就是處理留言、工作、使用者，</p>
+<p>而我並不想自己維護一台機器做這些事情，</p>
+<p>所以我用了 serverless 的方式去解決，</p>
+<p>想要瞭解更多關於 serverless 基礎的人，</p>
+<p>可以看一下這篇舊文：<a href="http://abalone0204.github.io/2016/05/22/serverless-simple-crud/" target="_blank" rel="external">淺析 serverless 架構</a></p>
+<p>是我剛學習 serverless 時做的筆記，</p>
+<p>同時也是繁體中文裡面最詳細的新手教學。</p>
+<blockquote>
+<p>就算簡體中文其實也是啦</p>
+</blockquote>
+<p>前端的話，有一些比較討厭的部分就是非同步的處理，</p>
+<p>但這裡 saga 很簡單的幫我 handle 處理好了，</p>
+<p>而且還給了相當好的測試性，</p>
+<p>這點非常非常重要，</p>
+<p>測試省掉了我不少 debug 的時間。</p>
+<blockquote>
+<p>中間大概重構了一兩次</p>
+</blockquote>
+<h1 id="Back-end"><a href="#Back-end" class="headerlink" title="Back-end"></a>Back-end</h1><p>首先就是要先訂好 schema，以及各個資料相互的關聯性，</p>
+<p>這裡有用到 GSI 來建立查詢的 index，</p>
+<p>雖然我們會用公司名稱以及職缺名稱來查詢，</p>
+<p>但這兩樣東西都不適合拿來當作 Primary Key，</p>
+<p>我覺得看完這篇官方的<a href="https://docs.aws.amazon.com/zh_cn/amazondynamodb/latest/developerguide/BestPractices.html" target="_blank" rel="external">最佳實踐</a>，</p>
+<p>就已經差不多能掌握怎樣去設計一個拿 dynamodb 當作資料庫服務的心法，</p>
+<p>剩下的只是把資料長怎樣想清楚而已。</p>
+<blockquote>
+<p>使用 DyanmoDB 時，會考慮到資料一致性的問題。</p>
+<p>但畢竟這不是一個非常要求即時性的服務，</p>
+<p>所以我對於最終一致性這件事情是有相當高的容忍度的 :D</p>
+<p>什麼是最終一致性呢？</p>
+<p>就是我們不保證每個節點讀取資料時，資料都會是相同的，（強一致性）</p>
+<p>但隨著時間過去，每個節點上的數據會回歸一致。</p>
+<p>這只是很粗略的說法，接下來幾個禮拜可能會寫一些和分散式有關的，</p>
+<p>就會提到這一點。因為一致性對於分散式運算來說一直是一個很頭痛的問題。</p>
+</blockquote>
+<h1 id="Front-end"><a href="#Front-end" class="headerlink" title="Front-end"></a>Front-end</h1><p>我選擇使用 React 及 Redux 的原因蠻單純的，</p>
+<p>因為我最近常在工作上用到它們。</p>
+<ul>
+<li><p>Reactjs+ CSS Module</p>
+<ul>
+<li><p>CSS 的命名一直是一個很難解的問題，這裡我的想法是無論再怎麼有效的規範，都是軟性的，CSS 的特性讓全域污染這件事情變得難以避免。但 CSS Module 卻可以讓所有的 class 都變成 local 的，</p>
+</li>
+<li><p>React 以 component 為主的開發模式，跟 CSS Module 搭配起來相當不錯</p>
+</li>
+</ul>
+</li>
+<li><p>Redux Saga</p>
+<ul>
+<li><p>處理非同步的資料流（像是從 backend fetch 資料）</p>
+</li>
+<li><p>有些 UI 上的 transaction 都可以在 saga 處理</p>
+</li>
+<li><p>使用 saga 的重點是「測試」，effect 的概念讓測試變得簡單很多，少了各種 mock</p>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>其實這裡本來想用 Rx 搞定，但工作上真的用了太多 Saga，現在有點回不去了⋯⋯</p>
+<p>假如你未曾瞭解過 saga，可以看一下我的這篇文章 <a href="http://abalone0204.github.io/2016/05/14/redux-saga/" target="_blank" rel="external">Saga Pattern 在前端的應用</a> </p>
+</blockquote>
+<h1 id="UX"><a href="#UX" class="headerlink" title="UX"></a>UX</h1><p>這裡不是要說有著多精美的 UI，</p>
+<p>是自己開發時，總覺得我開發的東西，真他媽怎麼用怎麼順手啊！</p>
+<p>實際上別人一看到時，卻常常完全不是這麼一回事。</p>
+<p>最好的方法就是請朋友幫忙用一下，</p>
+<p>然後什麼都不要跟他說，也不要有任何預先的假設。</p>
+<blockquote>
+<p>沒錯，就算你有說明書，User 就是死都不會看（我也是）</p>
+</blockquote>
+<p>很常發生的事情就是 User 完全不知道你想幹什麼，</p>
+<p>留言區塊那邊一開始就是這麼一回事，</p>
+<p>所以如果有人說你做的東西「太工程師」、「太 geek」，</p>
+<p>大概就是這個樣子。</p>
+<blockquote>
+<p>感謝我的幾個被我巴著幫忙測試的朋友。 <code>m (_ _) m</code></p>
+</blockquote>
+<h1 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h1><p>目前只支援 1111 以及 104，</p>
+<p>yes123 的 url，有那麼一點難以預測⋯⋯</p>
+<p>不過也是因為這個 Project ，可以感覺到各個求職平台是否用心，</p>
+<p>未來要加入的功能應該有以下幾項：</p>
+<ul>
+<li><p>個人留言職缺的追蹤</p>
+</li>
+<li><p>Facebook 粉絲頁的機器人</p>
+<ul>
+<li>幫忙發布熱門討論的職缺</li>
+</ul>
+</li>
+<li><p>重構</p>
+<ul>
+<li>比較有問題的應該是建立職缺那裡的 code 很醜 XD</li>
+</ul>
+</li>
+</ul>
+<p>其實我知道這個 beta 版本還有許多可以更好的地方，</p>
+<p>不過我更想瞭解這個插件是不是真的能解決一些問題，</p>
+<p>所以就先釋出這個 beta 版了！</p>
+<p>假如有什麼想問的問題也可以留言、發 issue 或直接跟問我，</p>
+<p>對我來說，不只是想 build 一個小小的插件，</p>
+<p>我想造出一個對求職者來說真正透明友善的環境，</p>
+<p>我知道一定會有蠻多人覺得這真是 too young, too naive 的想法，</p>
+<p>不過不試試看，怎麼會知道結果怎樣勒？</p>
+<ul>
+<li>下載位置：<a href="https://chrome.google.com/webstore/detail/clairvoyance-%E6%B1%82%E8%81%B7%E5%A4%A9%E7%9C%BC%E9%80%9A/mdneakdlnoidknagkamfeambdefhppbi?hl=zh-TW&amp;gl=TW" target="_blank" rel="external">Clairvoyance - 求職天眼通</a></li>
+</ul>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><ul>
+<li><p><a href="https://github.com/css-modules/css-modules" target="_blank" rel="external">CSS Module</a></p>
+</li>
+<li><p><a href="https://docs.aws.amazon.com/zh_cn/amazondynamodb/latest/developerguide/BestPractices.html" target="_blank" rel="external">DynamoDB 的最佳實踐</a>，</p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/06/16/clv-beta-version/" class="prev">PREV</a><a href="/2016/05/29/sls-fb-bot/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/06/12/clv-dev-note/';
+var disqus_title = 'Clairvoyance 是怎麼開發的';
+var disqus_url = 'http://abalone0204.github.com/2016/06/12/clv-dev-note/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 實作 Serverless 的 facebook messenger bot · De-bug: 一鍵跑版</title><meta name="description" content="實作 Serverless 的 facebook messenger bot - Tsung-Chen Ku"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">實作 Serverless 的 facebook messenger bot</h1><div class="post-time">May 29, 2016</div><div class="post-content"><p>上禮拜簡單介紹了一下 serverless 的起手式後，</p>
+<p>我想再舉個更接近實際應用的例子，</p>
+<p>儘管並不是所有的應用都適合 serverless 的架構，</p>
+<p>但聊天機器人(chat bot)是一個相當好的例子，</p>
+<p>且讓我稍後再說明為什麼。</p>
+<p>今天就結合一下很實用的粉絲頁回覆機器人以及 serverless 。</p>
+<blockquote>
+<p>你可以把聊天機器人想成是你粉絲頁自動回覆的員工</p>
+<p>或是進行一些簡單的操作</p>
+<p>而聊天機器人流行起來的原因正是因為 mobile 裝置上的介面，</p>
+<p>並不能滿足於現代人操作的所有需求，</p>
+<p>聊天的介面解放了我們在小框框裡做事的限制。</p>
+<p>或者是你是小小公司的開發者，需要一個助理來幫你做很無腦或繁瑣的事情，</p>
+<p>再講下去可能要一篇了，如果你對這個主題有興趣，</p>
+<p>可以看看 <a href="https://wanqu.co/blog/2015-05-24-behind-the-scenes.html" target="_blank" rel="external">灣區日報是如何運作的</a></p>
+</blockquote>
+<a id="more"></a> 
+<h1 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h1><p><img src="http://i.imgur.com/JmVfjQ5.png" alt="bot"></p>
+<p>微軟、line、slack 都出了，</p>
+<p>臉書當然也要 bot 來幫我們處理一些事情。</p>
+<blockquote>
+<p>相當不建議直接照著貼，可以先看看我的前一篇文章，</p>
+<p>至少現在敢大膽的說是目前最詳盡的 serverless 繁體中文入門教學：</p>
+<p><a href="http://abalone0204.github.io/2016/05/22/serverless-simple-crud/" target="_blank" rel="external">淺析 serverless 架構與實作</a></p>
+</blockquote>
+<p>這一篇筆記裡面會介紹如何把一個 facebook 粉絲專頁的 bot，</p>
+<p>用 serverless 的方式架起來。</p>
+<p>這個 bot 能夠：</p>
+<ul>
+<li><p>處理粉絲專頁接收到訊息的 events</p>
+</li>
+<li><p>執行對應的動作或回傳訊息</p>
+</li>
+</ul>
+<p>為了保持簡單，並且專注在 messenger bot 本身，</p>
+<p>我不會用到其他服務的 events，像是 DynamoDB 或是 S3 之類的，</p>
+<p>但其實只要能掌握收訊息，以及對應訊息做出動作，</p>
+<p>基本上就掌握了搭配其他功能的 interface 了 :D</p>
+<p>假如你是個懶得看文章的人，我一樣把 code 放在 github 上面了：</p>
+<ul>
+<li><a href="https://github.com/abalone0204/serverless-facebook-messenger-bot-starter" target="_blank" rel="external">serverless-facebook-messenger-bot-starter</a></li>
+</ul>
+<p>有幫助到你的話給星星打賞，有問題的話也歡迎提 issue 或直接告訴我。</p>
+<h1 id="Catalogue"><a href="#Catalogue" class="headerlink" title="Catalogue"></a>Catalogue</h1><ul>
+<li><p><a href="#Why-serverless">Why serverless</a></p>
+</li>
+<li><p><a href="#Implementation">Implementation</a></p>
+<ul>
+<li><p><a href="#申請作業">申請作業</a></p>
+</li>
+<li><p><a href="#Serverless-環境建構">Serverless 環境建構</a></p>
+</li>
+<li><p><a href="#https">https</a></p>
+</li>
+<li><p><a href="#Deployment-部署">Deployment 部署</a></p>
+</li>
+<li><p><a href="#Subscribe-to-fan-page">Subscribe to fan page</a></p>
+</li>
+<li><p><a href="#Reply-回覆訊息">Reply - 回覆訊息</a></p>
+</li>
+<li><p><a href="#更複雜的回覆訊息格式">更複雜的回覆訊息格式</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#Conclusion">Conclusion</a></p>
+</li>
+</ul>
+<h1 id="Why-serverless"><a href="#Why-serverless" class="headerlink" title="Why serverless"></a>Why serverless</h1><p>為什麼我認為 chat bot 是一個非常適合 serverless 架構的運用？</p>
+<p>想想我們平常聊天，訊息也都不會馬上回嘛！</p>
+<p>所以我們其實不需要那麼真正的「real time」，</p>
+<p>而且只有在有人丟訊息時，lambda 才會幫我們運算，</p>
+<p>省下了不少機器閒置在那的費用。</p>
+<ul>
+<li><p>對於延遲時間的容忍度高：</p>
+<ul>
+<li>容忍了 serverless 的缺點</li>
+</ul>
+</li>
+<li><p>有使用才收費：</p>
+<ul>
+<li>省錢、加上使用情境相當符合</li>
+</ul>
+</li>
+<li><p>簡單的運算</p>
+<ul>
+<li><p>AWS lambda 運算時間不能超過五分鐘，否則會被強制結束，但這種簡單的文字回覆，通常處理不會超過五分鐘…吧</p>
+</li>
+<li><p>當然如果你要跑什麼類神經網路，那我會建議那些運算邏輯可以放在真正的 server 上</p>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>題外話是這篇 <a href="http://joelgrus.com/2016/05/23/fizz-buzz-in-tensorflow/" target="_blank" rel="external">面試遇到 用 deep learning 解 fizzbuzz</a></p>
+<p>看到後面超好笑 XD</p>
+</blockquote>
+<ul>
+<li><code>https</code>: facebook 的 bot 會需要有 https ，通常可以透過 CloudFlare 免費申請一個，但假如你使用 lambda 的話，原生給你的連結就是 https 的。</li>
+</ul>
+<h1 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h1><p>同樣的，因為我認為介面隨時會改變，</p>
+<p>所以我不做截圖的 step by step 。</p>
+<h2 id="申請作業"><a href="#申請作業" class="headerlink" title="申請作業"></a>申請作業</h2><ul>
+<li>申請 facebook app、一個要用到的粉絲頁</li>
+</ul>
+<blockquote>
+<p>申請的類型有 ios、android 什麼的，</p>
+<p>先選網頁，然後網址可以亂打一通，這對之後沒有影響</p>
+</blockquote>
+<ul>
+<li><p>到 facebook 的 app 控制台</p>
+</li>
+<li><p>在控制列選擇新增產品</p>
+</li>
+<li><p>選 Messenger Expression</p>
+</li>
+<li><p>會看到一個新的 Messenger 跑出來了，選它</p>
+</li>
+<li><p>接著可以選擇你要把你的 bot 安置的粉絲頁，選擇後會得到一個權杖。</p>
+</li>
+</ul>
+<blockquote>
+<p>我覺得權杖是一個一聽會覺得「啥？」的命名，</p>
+<p>不過它的意思就是你能夠讓 bot 藉由這個「權杖」，</p>
+<p>取得在你粉絲頁發文或是發訊息的「權利」</p>
+</blockquote>
+<ul>
+<li>接下來選擇 setup webhooks</li>
+</ul>
+<blockquote>
+<p>什麼是 Webhook？</p>
+<p>你可以把它看成是一種 back-end 到 back-end 之間的通知，</p>
+<p>最常見的例子就是 CI 了</p>
+<p>e.q：今天在 github 上送了一個 commit，</p>
+<p>webhook 就會把這邊更新的訊息帶去給 CI server，</p>
+<p>CI server 收到後就會開始跑後續的流程</p>
+<p>hook，就是鉤子，在網路上把訊息以及收到訊息要執行的行為鉤住，</p>
+<p>帶到別的地方(callback url)去的就是 webhook</p>
+</blockquote>
+<ul>
+<li>到這裡我們就可以去設置一下環境了</li>
+</ul>
+<h2 id="Serverless-環境建構"><a href="#Serverless-環境建構" class="headerlink" title="Serverless 環境建構"></a>Serverless 環境建構</h2><p>為了驗證我們的 callback 是不是正確的，</p>
+<p>facebook 這邊會去做驗證，</p>
+<p>確認它送來的<code>hub.verify_token</code>跟你粉絲專頁的權杖一樣時，</p>
+<p>就會把 request 中的<code>hub.challenge</code>送回來。</p>
+<blockquote>
+<p>這裡有個小雷是我們要送回來的值是 integer，不是 string</p>
+</blockquote>
+<p>官方的例子大概長這樣：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Node.js Example</span></div><div class="line">app.get(<span class="string">'/webhook'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">req, res</span>) </span>&#123;</div><div class="line">  <span class="keyword">if</span> (req.query[<span class="string">'hub.verify_token'</span>] === &lt;YOUR_VERIFY_TOKEN&gt;) &#123;</div><div class="line">    res.send(req.query['hub.challenge']);</div><div class="line">  &#125; else &#123;</div><div class="line">    res.send('Error, wrong validation token');    </div><div class="line">  &#125;</div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<p>接著就一如往常的開一個 serverless 專案，</p>
+<p>建立一個 handler function。</p>
+<blockquote>
+<p>參考這邊<a href="http://abalone0204.github.io/2016/05/22/serverless-simple-crud/#Setup-開發環境的建置" target="_blank" rel="external">serverless setup 開發環境的建置</a></p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">serverless function create functions/bot</div></pre></td></tr></table></figure>
+<p>然後在來看程式的進入點：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">module</span>.exports.handler = <span class="function"><span class="keyword">function</span>(<span class="params">event, context</span>) </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">const</span> operation = event.operation</div><div class="line">    </div><div class="line"></div><div class="line">    <span class="keyword">switch</span> (operation) &#123;</div><div class="line">        <span class="keyword">case</span> <span class="string">'verify'</span>:</div><div class="line">            <span class="keyword">const</span> secret = event.secret</div><div class="line">            <span class="keyword">const</span> verifyToken = event[<span class="string">"verify_token"</span>]</div><div class="line">            <span class="keyword">if</span> (secret === verifyToken) &#123;</div><div class="line">                context.succeed(<span class="built_in">parseInt</span>(event[<span class="string">"challenge"</span>]))</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                context.fail(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Unmatch'</span>))</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">break</span></div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            context.fail(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Unrecognized operation "'</span> + operation + <span class="string">'"'</span>))</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p><code>operation</code>這個屬性是為了後續的動作，</p>
+<p>不管對這個 callback url 呼叫東西，</p>
+<p>都會進入這個 <code>handler.js</code> 但是我們必須有不同的動作，</p>
+<p>我認為這裡都是屬於在 bot 執行動作的邏輯之下，</p>
+<p>所以將它們放在同一個 handler.js 中，你完全可以有不同的編排方式 :)</p>
+</blockquote>
+<p><code>event</code> 裡的東西哪裡來呢？</p>
+<p><code>event</code>其實就是 request，serverless 是個 event-driven 的架構，</p>
+<p>我們可以在 <code>s-templates</code> 裡面去設置 template，</p>
+<p>這裡有個 tricky 的問題，就是要怎麼處理權杖？</p>
+<p>有兩種方法，</p>
+<p>一種是在本地端用 module export 的方式解決，</p>
+<p>另一種則是用 aws 的 env variable。</p>
+<p>首先先看用 aws 的 variable 怎麼解決</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sls variables set -k KEY -v VALUE -s STAGE -r REGION</div></pre></td></tr></table></figure>
+<p>然後我們就可以在 template 中使用 ${KEY} 的語法來拿到 variable，</p>
+<p>這裡要注意你是不是在每個不一樣的 stage 以及 region 都設置了 variable。</p>
+<p>要檢查的話可以進去自動生成的 <code>_meta</code> 資料夾看。</p>
+<blockquote>
+<p><code>_meta</code> 是自動被 git 給忽略的</p>
+</blockquote>
+<p>接下來到 <code>s-function.json</code> 裡面設定 request 的 template，</p>
+<p>把 callback</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">"requestTemplates": "$$&#123;apiGetCallbackTemplate&#125;",</div></pre></td></tr></table></figure>
+<p>再來看 <code>template</code> 長什麼樣子：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"apiGetCallbackTemplate"</span>: &#123;</div><div class="line">        <span class="attr">"application/json"</span>: &#123;</div><div class="line">            <span class="attr">"operation"</span>: <span class="string">"verify"</span>,</div><div class="line">            <span class="attr">"secret"</span>: <span class="string">"$&#123;fb_secret_key&#125;"</span>,</div><div class="line">            <span class="attr">"verify_token"</span>: <span class="string">"$input.params('hub.verify_token')"</span>,</div><div class="line">            <span class="attr">"challenge"</span>:<span class="string">"$input.params('hub.challenge')"</span></div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>假如你還不太熟悉 serverless，</p>
+<p>這裡就是在描述剛剛 <code>handler</code> 中<code>event</code>的長相：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="string">"secret"</span>: <span class="string">"FB_SECRET_KEY"</span>,</div><div class="line">    <span class="string">"verify_token"</span>: <span class="string">"VERIFY_TOKEN"</span>,</div><div class="line">    <span class="string">"challenge"</span>:<span class="string">"CHALLENGE_CODE"</span>    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>你可能會覺得對方如果知道你的 callback url 那不就顯示出你的 secret 了嗎？</p>
+<p>其一是這個連結不會對外，而你也可以限制 request 的來源，</p>
+<p>而這也是為什麼要加上這一段的原因：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (secret === verifyToken) &#123;</div><div class="line">    context.succeed(<span class="built_in">parseInt</span>(event[<span class="string">"challenge"</span>]))</div><div class="line">&#125; <span class="keyword">else</span> &#123;</div><div class="line">    context.fail(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Unmatch'</span>))</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如果沒有 secret 跟 verifyToken 沒有相等的話，</p>
+<p>會直接結束，並且返回 error。</p>
+<p>假如你不熟悉 aws 也不想接受這樣的做法的話，</p>
+<p>你可以在本地新建一個<code>secret.js</code></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">export</span> <span class="keyword">const</span> secret = <span class="string">"FB_SECRET_KEY"</span></div></pre></td></tr></table></figure>
+<p>然後把這支檔案 <code>.gitignore</code> 就行了，</p>
+<p>不過這其實算是一種 hack 的方式，並不是一個很漂亮的做法。</p>
+<h2 id="https"><a href="#https" class="headerlink" title="https"></a>https</h2><p>假如你要自己 host 一個服務來放 bot 的話，</p>
+<p>還要去額外申請 https，但如果你用 serverless，</p>
+<p>搭配 api gateway 就直接幫你避免掉了這個問題</p>
+<h2 id="Deployment-部署"><a href="#Deployment-部署" class="headerlink" title="Deployment 部署"></a>Deployment 部署</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">serverless dash deploy</div></pre></td></tr></table></figure>
+<p><code>function - callback</code> 跟 <code>endpoint - callback</code> 都選起來，</p>
+<p>部署上去之後會返回一個網址，</p>
+<p>當我們對這個網址送一個帶有 http method 為 GET 的 Requst 時，</p>
+<p>就會進入我們剛剛看到的 <code>handler.js</code> 中執行東西。</p>
+<ul>
+<li>setup wehook</li>
+</ul>
+<p>最後就是把返回的那個網址貼在 callback url 那裡，</p>
+<p>再把權杖給貼上去：</p>
+<p><img src="https://scontent-tpe1-1.xx.fbcdn.net/t39.2178-6/12057143_211110782612505_894181129_n.png" alt="webhook setup"></p>
+<p>(下面的欄位我都會全勾起來 XD)</p>
+<p>正確的方式應該是在 back-end 上放上 secret（這裡指權杖），</p>
+<p>facebook 會送個 request 到你的 callbakc url 去，</p>
+<p>並且看看在 params 中的 <code>hub.verify_token</code> 是不是等於你放上去的 secret，</p>
+<p>如果是的話，再把 params 中的 <code>hub.challenge</code> 當作 response 丟回來，</p>
+<p>facebook 就會判定你這個 webhook 通過認證，</p>
+<p>後續才能繼續進行下去。</p>
+<h2 id="Subscribe-to-fan-page"><a href="#Subscribe-to-fan-page" class="headerlink" title="Subscribe to fan page"></a>Subscribe to fan page</h2><p>有兩種方法可以去「監聽」粉絲專頁收到訊息的 event。</p>
+<ul>
+<li>以在 facebook app 操作的後台上選擇你要訂閱哪個粉絲專頁收到的訊息</li>
+</ul>
+<p>假如你寫過 rx，會知道 subscribe 可以監聽 event 是否進來，</p>
+<p>接著我們會去做對應的動作。</p>
+<p>假如你沒寫過 rx，<del>那你應該去學一下</del>。</p>
+<p>簡單說就是當我們監聽的粉絲專頁收到訊息時，</p>
+<p>剛剛設定的 webhook 會送一個 post method 的 request，</p>
+<p>而我們可以做出對應的行為，這裡通常就是返回一些訊息，</p>
+<p>facebook 的 messenger 還可以回傳附件之類的。</p>
+<p>官方給的 demo code 長這個樣子，先只要大略掃過一遍就好，</p>
+<p>後面會更詳細解說這裡在幹什麼，</p>
+<p>畢竟第一次看到的時候我也不知道這到底在幹嘛：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">app.post(<span class="string">'/webhook/'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">req, res</span>) </span>&#123;</div><div class="line">  messaging_events = req.body.entry[<span class="number">0</span>].messaging; <span class="comment">// 拿到 request 中的訊息</span></div><div class="line">  <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; messaging_events.length; i++) &#123;</div><div class="line">    event = req.body.entry[<span class="number">0</span>].messaging[i];</div><div class="line">    sender = event.sender.id; <span class="comment">// 送訊息人的 id</span></div><div class="line">    <span class="keyword">if</span> (event.message &amp;&amp; event.message.text) &#123;</div><div class="line">      text = event.message.text;</div><div class="line">      <span class="comment">// Handle a text message from this sender</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  res.sendStatus(<span class="number">200</span>);</div><div class="line">&#125;);</div></pre></td></tr></table></figure>
+<p>唯一知道的是我們送訊息時，會丟一個 POST reqeust 給 webhook，</p>
+<p>雖然最後得到了一個 <code>sender</code>（訊息的發送者），以及傳送的<code>text</code>訊息，</p>
+<p>還是有點搞不懂到底在做什麼，像遇到這種情形時，</p>
+<p>把東西 log 出來就對了。</p>
+<p>所以第一個目標就是來觀察一下 facebook 到底會送一些什麼東西過來。</p>
+<p>先把 post method 的 template 建出來</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="string">"apiPostCallbackTemplate"</span>: &#123;</div><div class="line">        <span class="string">"application/json"</span>: &#123;</div><div class="line">            <span class="string">"operation"</span>: <span class="string">"reply"</span>,</div><div class="line">            <span class="string">"body"</span>: <span class="string">"$input.json('$')"</span></div><div class="line">        &#125;        </div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>handler.js</code> 中其實 succeed 傳回的結果是什麼都沒差，</p>
+<p>重要的是我們能看到傳過來的 request，要把它 log 出來</p>
+<p>這是我們在寫 code 時常做的 debug 方法，</p>
+<p>就算 serverless 其實也沒有不同 XD</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// inside the handler function</span></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">display</span>(<span class="params">object</span>) </span>&#123;</div><div class="line">    <span class="keyword">return</span> <span class="built_in">JSON</span>.stringify(object, <span class="literal">null</span>, <span class="number">2</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">console</span>.log(<span class="string">'Event: '</span>, display(event))</div><div class="line"><span class="keyword">switch</span>(operation) &#123;</div><div class="line">    <span class="keyword">case</span> <span class="string">'reply'</span>:</div><div class="line">        context.succeed(event)</div><div class="line">        <span class="keyword">break</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接著我們到 facebook 上丟給我們剛剛創的粉絲專頁一些訊息，</p>
+<p>假設我們密他然後說個：「Hello bot 」</p>
+<p>到 AWS Cloud Watch 上面就可以看到返回的 body 長這個樣子，</p>
+<p>可以快速的掃過一次（大寫的是是代表一些 id，你懂的）：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="string">"object"</span>: <span class="string">"page"</span>,</div><div class="line">    <span class="string">"entry"</span>: [</div><div class="line">        &#123;</div><div class="line">            <span class="string">"id"</span>: ENTRY_ID,</div><div class="line">            <span class="string">"time"</span>: <span class="number">1464447058752</span>,</div><div class="line">            <span class="string">"messaging"</span>: [</div><div class="line">                &#123;</div><div class="line">                    <span class="string">"sender"</span>: &#123;</div><div class="line">                        <span class="string">"id"</span>: SENDER_ID</div><div class="line">                    &#125;,</div><div class="line">                    <span class="string">"recipient"</span>: &#123;</div><div class="line">                        <span class="string">"id"</span>: RECIPIENT_ID</div><div class="line">                    &#125;,</div><div class="line">                    <span class="string">"timestamp"</span>: <span class="number">1464447058667</span>,</div><div class="line">                    <span class="string">"message"</span>: &#123;</div><div class="line">                        <span class="string">"mid"</span>: <span class="string">"mid.1464447058507:7548866c81ec168b21"</span>,</div><div class="line">                        <span class="string">"seq"</span>: <span class="number">4</span>,</div><div class="line">                        <span class="string">"text"</span>: <span class="string">"Hello bot"</span></div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            ]</div><div class="line">        &#125;</div><div class="line">    ]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>看到這個之後，比較能知道 facebook 的 sample code 在幹嘛，</p>
+<p>而不是單純的 copy and paste。</p>
+<p>再上一次 sample code 來對照一下</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">app.post(<span class="string">'/webhook/'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">req, res</span>) </span>&#123;</div><div class="line">  messaging_events = req.body.entry[<span class="number">0</span>].messaging;</div><div class="line">  <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; messaging_events.length; i++) &#123;</div><div class="line">    event = req.body.entry[<span class="number">0</span>].messaging[i];</div><div class="line">    sender = event.sender.id;</div><div class="line">    <span class="keyword">if</span> (event.message &amp;&amp; event.message.text) &#123;</div><div class="line">      text = event.message.text;</div><div class="line">      <span class="comment">// Handle a text message from this sender</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  res.sendStatus(<span class="number">200</span>);</div><div class="line">&#125;);</div></pre></td></tr></table></figure>
+<p>看起來 facebook 的工程師為了保留開發上的彈性，</p>
+<p>所以加上了一些目前看起來有點冗的東西，</p>
+<p>我們可以選擇一開始就把 <code>messaging_events</code> 在 template 裡面拿出來，</p>
+<p>或者是一樣拿回整個 body，不過為了說明方便，</p>
+<p>還是照它原本的格式走。</p>
+<p>總之，理解後就能開始試著把它改成 serverless 的模式了：</p>
+<p>（真的是幾乎長得一模一樣）</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">switch</span> (operation) &#123;</div><div class="line">    <span class="keyword">case</span> <span class="string">'reply'</span>:</div><div class="line">    <span class="keyword">const</span> messagingEvents = event.body.entry[<span class="number">0</span>].messaging</div><div class="line">    messagingEvents.forEach((messagingEvent) =&gt; &#123;</div><div class="line">        <span class="keyword">const</span> sender = messagingEvent.sender.id</div><div class="line">        <span class="keyword">if</span> (messagingEvent.message &amp;&amp; messagingEvent.message.text) &#123;</div><div class="line">            <span class="keyword">const</span> text = messagingEvent.message.text</div><div class="line">            <span class="comment">// Handle a text message from this sender</span></div><div class="line">        &#125;</div><div class="line">    &#125;)</div><div class="line">    <span class="keyword">break</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>為什麼要拿 <code>sender</code> 以及 <code>text</code>呢？</p>
+<p>原因就是待會回覆訊息會需要用到。</p>
+<h2 id="Reply-回覆訊息"><a href="#Reply-回覆訊息" class="headerlink" title="Reply - 回覆訊息"></a>Reply - 回覆訊息</h2><p>回覆訊息要用到我們之前的能登入粉絲頁的「密碼權杖」，</p>
+<p>假如你是用 variable 解決的話，這部分會簡單很多。</p>
+<p>只要把剛剛在 callback url 的 <code>fb_secret_key</code> copy 過去就好了：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="string">"apiPostCallbackTemplate"</span>: &#123;</div><div class="line">    <span class="string">"application/json"</span>: &#123;</div><div class="line">        <span class="string">"secret"</span>: <span class="string">"$&#123;fb_secret_key&#125;"</span>,</div><div class="line">        <span class="string">"operation"</span>: <span class="string">"reply"</span>,</div><div class="line">        <span class="string">"body"</span>: <span class="string">"$input.json('$')"</span></div><div class="line">    &#125;        </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>一樣先來看一下 sample code 是怎麼做的：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> token = <span class="string">"&lt;page_access_token&gt;"</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">sendTextMessage</span>(<span class="params">sender, text</span>) </span>&#123;</div><div class="line">  messageData = &#123;</div><div class="line">    text:text</div><div class="line">  &#125;</div><div class="line">  request(&#123;</div><div class="line">    url: <span class="string">'https://graph.facebook.com/v2.6/me/messages'</span>,</div><div class="line">    qs: &#123;access_token:token&#125;,</div><div class="line">    method: <span class="string">'POST'</span>,</div><div class="line">    json: &#123;</div><div class="line">      recipient: &#123;id:sender&#125;,</div><div class="line">      message: messageData,</div><div class="line">    &#125;</div><div class="line">  &#125;, <span class="function"><span class="keyword">function</span>(<span class="params">error, response, body</span>) </span>&#123;</div><div class="line">    <span class="keyword">if</span> (error) &#123;</div><div class="line">      <span class="built_in">console</span>.log(<span class="string">'Error sending message: '</span>, error);</div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (response.body.error) &#123;</div><div class="line">      <span class="built_in">console</span>.log(<span class="string">'Error: '</span>, response.body.error);</div><div class="line">    &#125;</div><div class="line">  &#125;);</div><div class="line">&#125;</div><div class="line"><span class="comment">// 實際傳送訊息</span></div><div class="line">sendTextMessage(sender, <span class="string">"Text received, echo: "</span>+ text.substring(<span class="number">0</span>, <span class="number">200</span>));</div></pre></td></tr></table></figure>
+<p>沒錯，這裡根本就可以直接拿來用了，</p>
+<p>我們先求有再求好：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">module</span>.exports.handler = <span class="function"><span class="keyword">function</span>(<span class="params">event, context</span>) </span>&#123;</div><div class="line">    <span class="keyword">const</span> operation = event.operation</div><div class="line">    <span class="keyword">const</span> secret = event.secret</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">sendTextMessage</span>(<span class="params">sender, text</span>) </span>&#123;</div><div class="line">        <span class="keyword">const</span> messageData = &#123;text: text&#125;</div><div class="line">        request(&#123;</div><div class="line">            url: <span class="string">'https://graph.facebook.com/v2.6/me/messages'</span>,</div><div class="line">            qs: &#123;</div><div class="line">                access_token: secret</div><div class="line">            &#125;,</div><div class="line">            method: <span class="string">'POST'</span>,</div><div class="line">            json: &#123;</div><div class="line">                recipient: &#123;</div><div class="line">                    id: sender</div><div class="line">                &#125;,</div><div class="line">                message: messageData,</div><div class="line">            &#125;</div><div class="line">        &#125;, (error, response, body) =&gt; &#123;</div><div class="line">            <span class="built_in">console</span>.log(<span class="string">'GET response'</span>, response);</div><div class="line">            context.succeed(response);</div><div class="line">            <span class="keyword">if</span> (error) &#123;</div><div class="line">                context.fail(<span class="string">'Error sending message: '</span>, error);</div><div class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (response.body.error) &#123;</div><div class="line">                context.fail(<span class="string">'Error: '</span>, response.body.error);</div><div class="line">            &#125;</div><div class="line">        &#125;)</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">switch</span> (operation) &#123;</div><div class="line">        <span class="keyword">case</span> <span class="string">'reply'</span>:</div><div class="line">            <span class="keyword">const</span> messagingEvents = event.body.entry[<span class="number">0</span>].messaging;</div><div class="line">            messagingEvents.forEach((messagingEvent) =&gt; &#123;</div><div class="line">                <span class="keyword">const</span> sender = messagingEvent.sender.id</div><div class="line">                <span class="keyword">if</span> (messagingEvent.message &amp;&amp; messagingEvent.message.text) &#123;</div><div class="line">                    <span class="keyword">const</span> text = messagingEvent.message.text;</div><div class="line">                    sendTextMessage(sender, <span class="string">"Text received, echo: "</span>+ text.substring(<span class="number">0</span>, <span class="number">200</span>))</div><div class="line">                &#125;</div><div class="line">            &#125;)</div><div class="line">            <span class="keyword">break</span></div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            context.fail(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Unrecognized operation "'</span> + operation + <span class="string">'"'</span>))</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在執行 <code>sendTextMessage</code> 時，</p>
+<p>裡面的 <code>request</code> 會是非同步的，</p>
+<p>也就是說在後續的流程裡如果你讓整個 function 提早結束的話，</p>
+<p>訊息將不會被傳送。</p>
+<p>不過 user 一進來，其實不會知道 bot 有哪些功能，</p>
+<p>我們可以設定對話剛開始的開場白，只要在執行這行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">curl -X POST -H &quot;Content-Type: application/json&quot; -d &apos;&#123;</div><div class="line">  &quot;setting_type&quot;:&quot;call_to_actions&quot;,</div><div class="line">  &quot;thread_state&quot;:&quot;new_thread&quot;,</div><div class="line">  &quot;call_to_actions&quot;:[</div><div class="line">    &#123;</div><div class="line">      &quot;message&quot;:&#123;</div><div class="line">        &quot;text&quot;:&quot;Hi, 歡迎來到 Serverless Maniac。我是機器人，輸入 help 來看有什麼指令可以用吧&quot;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  ]</div><div class="line">&#125;&apos; &quot;https://graph.facebook.com/v2.6/&lt;PAGE_ID&gt;/thread_settings?access_token=&lt;FB_SECRET_KEY&gt;&quot;</div></pre></td></tr></table></figure>
+<blockquote>
+<p><code>FB_SECRET_KEY</code>就是前面提到的密碼權杖，<code>PAGE_ID</code> 是你粉絲頁對應的 id，</p>
+</blockquote>
+<p>出來結果大概就是這樣子</p>
+<p><img src="http://i.imgur.com/hruiXeO.jpg" alt="demo"></p>
+<h2 id="更複雜的回覆訊息格式"><a href="#更複雜的回覆訊息格式" class="headerlink" title="更複雜的回覆訊息格式"></a>更複雜的回覆訊息格式</h2><ul>
+<li><p>facebook 也提供一些更 fancy 的訊息格式 </p>
+</li>
+<li><p>針對特定的訊息去做動作</p>
+</li>
+</ul>
+<p>比起一般的小編回覆訊息，這裡能夠藉由 messenger platform 提供的 API，</p>
+<p>回覆一個更像 app 的訊息模板、提供更棒的 UX，</p>
+<p>啊！這樣講好抽象，直接看一下成果的話大概是這樣子：</p>
+<p><img src="https://media.giphy.com/media/xT4uQAs24rrYQDjNuw/giphy.gif" alt="struc demo"></p>
+<blockquote>
+<p>沒錯，就是做了一個自己 blog 的 feeds</p>
+</blockquote>
+<p>剛剛在 <code>sendTextMessage</code> 裡面會把 <code>text</code>再額外包一層處理，</p>
+<p>可見這裡是保留了其他彈性，</p>
+<p>往後翻一下文件就會看到我們可以自訂訊息的模板。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> text = messagingEvent.message.text;</div><div class="line"><span class="keyword">const</span> messageData = genMessageData(text)</div><div class="line">sendTextMessage(sender, messageData)</div></pre></td></tr></table></figure>
+<p>在 <code>genMessageData</code> 裡面：</p>
+<blockquote>
+<p>不要被長度嚇到了，你可以對照圖片中的字，</p>
+<p>跟下面程式碼做對照，其實都只是在處理 elements 裡面一個個 object 而已</p>
+</blockquote>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (text === <span class="string">'feeds'</span>) &#123;</div><div class="line">    <span class="keyword">return</span> &#123;</div><div class="line">        <span class="string">"attachment"</span>: &#123;</div><div class="line">            <span class="string">"type"</span>: <span class="string">"template"</span>,</div><div class="line">            <span class="string">"payload"</span>: &#123;</div><div class="line">                <span class="string">"template_type"</span>: <span class="string">"generic"</span>,</div><div class="line">                <span class="string">"elements"</span>: [&#123;</div><div class="line">                    <span class="string">"title"</span>: <span class="string">"淺析 serverless 架構與實作"</span>,</div><div class="line">                    <span class="string">"subtitle"</span>: <span class="string">"May 22, 2016"</span>,</div><div class="line">                    <span class="string">"image_url"</span>: <span class="string">"http://i.imgur.com/lP3wcnh.jpg"</span>,</div><div class="line">                    <span class="string">"buttons"</span>: [&#123;</div><div class="line">                        <span class="string">"type"</span>: <span class="string">"web_url"</span>,</div><div class="line">                        <span class="string">"url"</span>: <span class="string">"http://abalone0204.github.io/2016/05/22/serverless-simple-crud/"</span>,</div><div class="line">                        <span class="string">"title"</span>: <span class="string">"open"</span></div><div class="line">                    &#125;]</div><div class="line">                &#125;, &#123;</div><div class="line">                    <span class="string">"title"</span>: <span class="string">"Saga Pattern 在前端的應用"</span>,</div><div class="line">                    <span class="string">"subtitle"</span>: <span class="string">"May 14, 2016"</span>,</div><div class="line">                    <span class="string">"image_url"</span>: <span class="string">"https://upload.wikimedia.org/wikipedia/zh/3/37/Adventure_Time_-_Title_card.png"</span>,</div><div class="line">                    <span class="string">"buttons"</span>: [&#123;</div><div class="line">                        <span class="string">"type"</span>: <span class="string">"web_url"</span>,</div><div class="line">                        <span class="string">"url"</span>: <span class="string">"http://abalone0204.github.io/2016/05/14/redux-saga/"</span>,</div><div class="line">                        <span class="string">"title"</span>: <span class="string">"open"</span></div><div class="line">                    &#125;]</div><div class="line">                &#125;,</div><div class="line">                &#123;</div><div class="line">                    <span class="string">"title"</span>: <span class="string">"淺入淺出 Generator Function"</span>,</div><div class="line">                    <span class="string">"subtitle"</span>: <span class="string">"May 8, 2016"</span>,</div><div class="line">                    <span class="string">"image_url"</span>: <span class="string">"http://www.rumproast.com/images/uploads/shallow_end_thumb.jpg"</span>,</div><div class="line">                    <span class="string">"buttons"</span>: [&#123;</div><div class="line">                        <span class="string">"type"</span>: <span class="string">"web_url"</span>,</div><div class="line">                        <span class="string">"url"</span>: <span class="string">"http://abalone0204.github.io/2016/05/08/es6-generator-func/"</span>,</div><div class="line">                        <span class="string">"title"</span>: <span class="string">"open"</span></div><div class="line">                    &#125;]</div><div class="line">                &#125;,</div><div class="line">                &#123;</div><div class="line">                    <span class="string">"title"</span>: <span class="string">"Super tiny compiler"</span>,</div><div class="line">                    <span class="string">"subtitle"</span>: <span class="string">"Apr 25, 2016"</span>,</div><div class="line">                    <span class="string">"image_url"</span>: <span class="string">"https://cloud.githubusercontent.com/assets/952783/14413766/134c4068-ff39-11e5-996e-9452973299c2.png"</span>,</div><div class="line">                    <span class="string">"buttons"</span>: [&#123;</div><div class="line">                        <span class="string">"type"</span>: <span class="string">"web_url"</span>,</div><div class="line">                        <span class="string">"url"</span>: <span class="string">"http://abalone0204.github.io/2016/04/25/Super-tiny-compiler/"</span>,</div><div class="line">                        <span class="string">"title"</span>: <span class="string">"open"</span></div><div class="line">                    &#125;]</div><div class="line">                &#125;</div><div class="line">                ]</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h1><p>截至目前為止，我們已經理解了怎麼接收和傳送訊息，</p>
+<p>對我來說這是一個比 slack 更輕量的小助理，</p>
+<p>其實搭配 DynamoDB 或是其他 backend 就可以做到 schedule 的效果。</p>
+<p>同時我認為 bot 並不是拿來取代小編的，</p>
+<p>可以將一些常問的問題和解答建在 bot 裡面，</p>
+<p>讓小編不用再去回一些重複的問題，專注在寫出更好的文案，</p>
+<p>以及更急迫需要回應的客戶上面。</p>
+<blockquote>
+<p>可以選擇搭配 <a href="https://hubot.github.com/" target="_blank" rel="external">hubot</a> 來處理各種訊息，</p>
+<p>以及對應的動作。</p>
+<p>不過仍然要強調一下，這篇筆記著重在如何建立一個這樣的 interface：<code>收訊息 =&gt; 執行動作</code></p>
+<p>另外，把程式邏輯全部都放在 <code>handelr.js</code>，只是為了說明方便，</p>
+<p>你可以選擇自己喜歡的方式來建構 bot。</p>
+</blockquote>
+<p>最後，額外提醒一下 XD</p>
+<p>目前完成的 bot 只能夠跟你個人通話而已，</p>
+<p>假如你想讓其他人也看到的話，</p>
+<p>必須到 facebook app 的控制台通過 facebook 的審核後才行，</p>
+<p>希望大家能做出許多好玩的粉絲專頁應用 XD</p>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><ul>
+<li><p><a href="https://developers.facebook.com/docs/messenger-platform" target="_blank" rel="external">Facebook Messenger Platform</a></p>
+</li>
+<li><p><a href="http://abalone0204.github.io/2016/05/22/serverless-simple-crud/" target="_blank" rel="external">淺析 serverless 架構與實作</a></p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/06/12/clv-dev-note/" class="prev">PREV</a><a href="/2016/05/22/serverless-simple-crud/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/05/29/sls-fb-bot/';
+var disqus_title = '實作 Serverless 的 facebook messenger bot';
+var disqus_url = 'http://abalone0204.github.com/2016/05/29/sls-fb-bot/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

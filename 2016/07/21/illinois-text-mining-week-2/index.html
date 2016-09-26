@@ -1,0 +1,758 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> Text Mining & Analysis： week 2 · De-bug: 一鍵跑版</title><meta name="description" content="Text Mining &amp; Analysis： week 2 - Tsung-Chen Ku"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">Text Mining & Analysis： week 2</h1><div class="post-time">Jul 21, 2016</div><div class="post-content"><p>這是一篇關於 Coursera 上：<a href="https://www.coursera.org/learn/text-mining/home/welcome" target="_blank" rel="external">Text Mining and Analytics (伊利諾伊大學香檳分校)</a>的筆記。</p>
+<p>主要在探討 text mining 和 分析，</p>
+<p>經過我整理之後應該會變得好懂很多。</p>
+<p>這是第二個禮拜課程的筆記，</p>
+<p>假如你還沒看過第一個禮拜，</p>
+<p>可以先看這裡：</p>
+<ul>
+<li><a href="http://abalone0204.github.io/2016/07/15/illinois-text-mining-week-1/" target="_blank" rel="external">Text Mining &amp; Analysis： week 1</a></li>
+</ul>
+<a id="more"></a>
+<h1 id="Outline"><a href="#Outline" class="headerlink" title="Outline"></a>Outline</h1><p>這一週裡面會包含三個主題：</p>
+<ul>
+<li><p>Syntagmatic relation discovery</p>
+</li>
+<li><p>Topic Mining and analysis</p>
+</li>
+<li><p>Probabilistic Topic Models</p>
+</li>
+</ul>
+<h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>在開始之前先快速複習一下上禮拜學習的東西，</p>
+<p>試著去解釋和回答以下幾個問題，</p>
+<p>如果還會遲疑的話可能要回到<a href="http://abalone0204.github.io/2016/07/15/illinois-text-mining-week-1/" target="_blank" rel="external">第一篇</a>稍微看一下：</p>
+<ul>
+<li><p>deep techniques 和 shallow techniques 的 trade-off 是什麼</p>
+</li>
+<li><p>了解為什麼 NLP 是困難的</p>
+</li>
+<li><p>Paradigmatic relation 以及 Syntagmatic relation</p>
+</li>
+<li><p>Paradigmatic 以及 BM25 加上 tf-idf </p>
+</li>
+</ul>
+<p>這一章節可能會有比較多特別的名詞或公式，</p>
+<p>不過拆開來一步步理解，</p>
+<p>他們其實都是蠻直觀的概念，</p>
+<p>我以前也是因為這堆符號嚇到被老師當掉過，</p>
+<p>實際去學才發現，</p>
+<p><del>嗯老師考卷還是出太難馬的幹</del></p>
+<p>其實背後的本質就是簡單的數學而已。</p>
+<h1 id="Syntagmatic-relation-discovery"><a href="#Syntagmatic-relation-discovery" class="headerlink" title="Syntagmatic relation discovery"></a>Syntagmatic relation discovery</h1><p>要找到 Syntagmatic relation，</p>
+<p>要觀察的就是 co-occurence，（同時出現的機率）。</p>
+<h2 id="Intuition"><a href="#Intuition" class="headerlink" title="Intuition"></a>Intuition</h2><p>為了培養一下對於挖掘組合性關係（Syntagmatic relation）的直覺，</p>
+<p>直接來看下面這個問題，</p>
+<p>有以下三個字，</p>
+<p>你覺得哪個字最好去預測它在文本中會不會出現呢？</p>
+<blockquote>
+<p>這裡的文本指的可能是 pseudo document、句子、段落</p>
+</blockquote>
+<p>$$ W_1 = “meat”$$</p>
+<p>$$ W_2 = “the”$$</p>
+<p>$$ W_3 = “unicorn”$$</p>
+<p>答案會是 “the”，因為它到處都是嘛！</p>
+<p>再來可能會是 unicorn，因為這不是個常用的單字，出現機率可能很低。</p>
+<blockquote>
+<p>矽谷表示： __</p>
+</blockquote>
+<p>最後則是 meat，因為他出現的機率最為「難預測」，</p>
+<p>你很難精確說明怎樣的情形「一定會」出現 meat，</p>
+<p>也很難解釋什麼條件下「一定不會」出現 meat。</p>
+<p>上述的情境其實可以當作一個 function 來看，</p>
+<p>輸入是某個字（meat, the, unicorn），</p>
+<p>輸出則是它會不會出現在文本中，</p>
+<p>會就是 1，不會就是 0。</p>
+<p>而上述的這個概念就是「隨機變數（Random Variable）」，</p>
+<blockquote>
+<p>沒錯，我一開始也很疑惑，</p>
+<p>但隨機變數就是一個函數，</p>
+<p>數學家才不管什麼可維護性，naming 這種東西就是他們說了算，懂？</p>
+</blockquote>
+<p>將一個機率空間中的值（子集合）對應到一個實數上（這裡是 0 或 1），</p>
+<p>這就是 random variable。</p>
+<p>$$<br>X_w = 0 \, or \, 1<br>$$</p>
+<p>如果 w 存在文本中就等於 1，反之則為 0。</p>
+<p>所以 <code>X_w</code> 如果越隨機，就越難預測，</p>
+<p>問題來了，該怎麼去量化誰「比較隨機」呢？</p>
+<h2 id="Entropy"><a href="#Entropy" class="headerlink" title="Entropy"></a>Entropy</h2><p>要靠的是 Entropy(熵)，不要被這個名詞嚇到了，</p>
+<p>其實它也只是一個值，算出來越高，</p>
+<p>代表這個 random variable 越隨機，這也就代表越難預測。</p>
+<p>來看它的公式怎麼寫：</p>
+<p>$$<br>\sum_{v = 1 \, or \, 0} -p(X_w=v)log_2 p(X_w=v)<br>$$</p>
+<blockquote>
+<p>這裡為了方便計算，要假設 log_2(0) 為 0。</p>
+</blockquote>
+<p>接著拿執硬幣的機率來舉例，</p>
+<p>假設有個公正的硬幣，兩面出現的機會相等，都是 0.5；</p>
+<p>另一個只會擲出反面的硬幣，</p>
+<p>哪一個會算出較高的熵？</p>
+<p>首先把公式列出來看：</p>
+<p>$$<br>entropy = -p(x=正面)log_2(p(x=正面))-p(x=反面)log_2(p(x=反面))<br>$$</p>
+<p>再來先帶入公正的硬幣：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">p(x=正面) = 0.5</div><div class="line"></div><div class="line">p(x=反面) = 0.5</div></pre></td></tr></table></figure>
+<p>$$<br>H(X) = -\frac{1}{2} log_2(\frac{1}{2})-\frac{1}{2} log_2(\frac{1}{2}) = 1<br>$$</p>
+<p>而帶入</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">p(x=正面) = 0</div><div class="line"></div><div class="line">p(x=反面) = 1</div></pre></td></tr></table></figure>
+<p>$$<br>H(X) = -0 \times log_2(0)- 1 \times log_2(1) = 0<br>$$</p>
+<p>看的出來公平硬幣的熵較高，</p>
+<p>而在數學上證明了這個直覺是對的，</p>
+<p>公平硬幣比起只會出現一面的硬幣來的隨機多了！</p>
+<h2 id="Conditional-Entropy"><a href="#Conditional-Entropy" class="headerlink" title="Conditional Entropy"></a>Conditional Entropy</h2><p>很快地會發現，前面講的只是單一個字會不會出現的隨機性，</p>
+<p>換言之這裡只計算了 occurence；</p>
+<p>但我們真正想要知道的是跟其他字同時出現的 co-occurence 啊！</p>
+<p>這時候就是 conditional entropy 上場的時候。</p>
+<p>當知道字句中有 “eats” 這個字存在時，</p>
+<p>出現 “meat” 的機率可以表示為下面這樣</p>
+<p>$$<br>P(X_m = 1 \mid X_e = 1)<br>$$</p>
+<p>所以直接把 entropy 公式中的<code>P(X_m)</code>換成 <code>P(X_m | X_e)</code>即可算出 conditional entropy：</p>
+<p>$$<br>H(X_m \mid X_e = 1) = -p(X_m \mid X_e =1 )log_2(p(X_m \mid X_e =1 ))<br>$$</p>
+<p>而 <code>H(X_m)</code> 會是 <code>H(X_m | X_e=1)</code> 的上界</p>
+<blockquote>
+<p>因為 <code>H(X_m)</code> = <code>H(X_m | X_e=1)</code> + <code>H(X_m | X_e=0)</code></p>
+</blockquote>
+<p>這裡隱含著的道理就是「做的任何事情都是要降低不確定性」，</p>
+<p>conditional entropy 不會超過原本的 entropy，</p>
+<p>所謂的文本探勘，就是一個降低不確定性的過程，</p>
+<p>而我們也發相資料間要彼此相關，才能夠有效的降低不確定性。</p>
+<p>有了這個數學上的直覺、清楚我們目標在哪後再繼續。</p>
+<h1 id="Mutual-Information"><a href="#Mutual-Information" class="headerlink" title="Mutual Information"></a>Mutual Information</h1><h2 id="Concept"><a href="#Concept" class="headerlink" title="Concept"></a>Concept</h2><p>上述知道使用 conditional entropy 可能會降低不可預測性後，</p>
+<p>就要來問：要怎麼量化減少的程度為多少？</p>
+<p>這時候就會用到 mutual information，</p>
+<p>它代表的意義就是當我們知道其中一個詞時，</p>
+<p>到底降低了多少的不確定性，</p>
+<p>而兩個詞之間，相關的程度到底是多少？</p>
+<p>這時候就要來介紹 Mutual Information，</p>
+<p>Mutual information 用數學符號表示：</p>
+<p>$$<br>I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X)<br>$$</p>
+<p>圖大概是長這個樣子：</p>
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Entropy-mutual-information-relative-entropy-relation-diagram.svg/512px-Entropy-mutual-information-relative-entropy-relation-diagram.svg.png" alt="mutual info"></p>
+<p>而 <code>I(X;Y)</code> 有三個特性：</p>
+<ul>
+<li><p>大於等於 0</p>
+</li>
+<li><p>對稱性：</p>
+</li>
+</ul>
+<p>$$<br>I(X;Y) = I(Y;X)<br>$$</p>
+<ul>
+<li>只有 X 與 Y 互相獨立時，<code>I(X;Y)</code>會等於 0(完全相關時，則為 1)</li>
+</ul>
+<p>這樣講可能還是不太能理解，所以我舉數學之美中的例子。</p>
+<p>Bush，是翻作布希總統還是灌木叢總統呢？</p>
+<p>要讓機器分辨這件事情，</p>
+<p>如果有人沒理解過 NLP，會說如果後面是接總統或職稱，那就是總統，</p>
+<p>不是的話，那就是灌木叢，</p>
+<p>事實上我們都知道這樣的做法會讓語法的計算多到無法進行計算，或計算過於緩慢；</p>
+<p>因此我們應該要利用的就是 Mutual Information，</p>
+<p>我們先找到文本中提到布希是指總統時的文本，</p>
+<p>並計算其中 Mutual information 最高的字：總統、美國、國會⋯⋯等 <code>(a)</code>，</p>
+<p>而灌木叢也是同理：森林、野生、土壤⋯⋯ <code>(b)</code>。</p>
+<p>最後在計算時，只要看上下文中的詞，是 <code>a</code> 還是 <code>b</code>比較多就可以了。</p>
+<p>前面是從熵的角度去切入，</p>
+<p>更 practical 一點的做法是用機率的角度去看，</p>
+<p>這裡介紹 KL-divergence 這個公式，</p>
+<p>（或稱作 relative entropy 相對熵）</p>
+<p><img src="http://i.imgur.com/BOQuu10.png" alt="kl-div"></p>
+<blockquote>
+<p>格式請見諒，mathjax 在同一行要使用 X_{..}系列時會出錯</p>
+</blockquote>
+<p>如果你想知道這個公式的數學意義下面會有解釋，</p>
+<p>但其實你只要記住：</p>
+<ul>
+<li><p>相對熵越大，兩個函數差異越大，反之亦然。</p>
+</li>
+<li><p>假如今天輸出的是兩個分配，只要取值都大於 0 ，那麼相對熵也可以表示這兩個分配的差異。</p>
+</li>
+</ul>
+<p>kl-divergence 最值得注意的是 log2 裡面的這一項：</p>
+<p>$$\frac{p(X_w1 = u,\, X_w2 = v)}{p(X_w1 = u) p(X_w2 = v)}$$</p>
+<p>如果<code>X_w1</code> 跟 <code>X_w2</code>是相互獨立的話，</p>
+<p>分子分母會相同，</p>
+<p>因此這一項會趨近於 1，</p>
+<p>再取 log 後就會變成 0，</p>
+<p>這樣在計算 divergence 時就會把這一項相互獨立的給去掉。</p>
+<p>算 mutual information 的意義在於：</p>
+<p>「因為我們想了解如果知道其中一個字，</p>
+<p>到底能下降多少的不確定性？」</p>
+<p>而兩個字出現的機率如果是完全獨立，（意思即 w2 出不出現都跟 w1沒差）</p>
+<p>那 mutual information 自然要等於零，</p>
+<p>因為知道其中一個字完全不會影響另一個出現的機率，</p>
+<p>自然也不會降低任何不確定性了。</p>
+<h2 id="Joint-和-Independent-Optional"><a href="#Joint-和-Independent-Optional" class="headerlink" title="Joint 和 Independent(Optional)"></a>Joint 和 Independent(Optional)</h2><blockquote>
+<p>這裡是對獨立事件的小小補充，</p>
+<p>講的並不嚴謹，</p>
+<p>如果你對於 joint probability 和獨立事件沒有問題的話，可以跳過這一段</p>
+<p>或是指正一下我哪裡的說明有誤 XD</p>
+</blockquote>
+<p>如果你沒有修過機率論的話可能會覺得：</p>
+<p>「欸？ <code>p(X_w1 = u, X_w2 = v)</code> 不就等於<code>p(X_w1 = u) * p(X_w2 = v)</code>嗎？」</p>
+<p>但很可惜事實並非如此，用符號來表示並不直觀，</p>
+<p>幸運的是機率這種東西用舉例的來觀察就會很直覺，</p>
+<p>我們舉下面這個例子來說：</p>
+<p>我們有四個 document，</p>
+<p>X 則是 document 中有出現 w1或 w2 的隨機變數，</p>
+<p>有出現 = 1，沒出現 = 0。</p>
+<table>
+<thead>
+<tr>
+<th>document</th>
+<th>X_w1</th>
+<th>X_w2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>d1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>d2</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>d3</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>d4</td>
+<td>0</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p><code>p(X_w1 = 1)</code> = 0.75<br><code>p(X_w1 = 0)</code> = 0.25<br><code>p(X_w2 = 1)</code> = 0.75<br><code>p(X_w2 = 1)</code> = 0.25</p>
+<p>而 <code>p(X_w1 = 1, X_w2 = 1)</code>則為 0.5，</p>
+<p>但 <code>p(X_w1 = 1)</code> 與 <code>p(X_w2 = 1)</code>直接相乘卻是 0.1875，</p>
+<p>由此可見這兩個在有相依性存在的情況下，</p>
+<p>可能會不相等 XD。</p>
+<p>但假設今天是擲一枚公正硬幣兩次的話：</p>
+<p><code>p(x1=正面)</code> * <code>p(x2=正面)</code> = 0.25</p>
+<p><code>p(x1=正面, x2= 正面)</code> = 0.25</p>
+<p>因為投擲一枚硬幣兩次是獨立事件，</p>
+<p>而在更上面的例子中，</p>
+<p><code>p(X_w1)</code>與 <code>p(X_w2)</code>並沒有完全獨立。</p>
+<blockquote>
+<p>基本上有這個概念就已經夠了，</p>
+<p>如果你還是很有興趣可以去翻翻機率論，</p>
+<p>我大學時候修過，覺得真的⋯⋯很快樂 ^_^。</p>
+</blockquote>
+<h2 id="Computing-for-syntagmatic-relation"><a href="#Computing-for-syntagmatic-relation" class="headerlink" title="Computing for syntagmatic relation"></a>Computing for syntagmatic relation</h2><h3 id="Maximum-Likelihood-Estimation"><a href="#Maximum-Likelihood-Estimation" class="headerlink" title="Maximum Likelihood Estimation"></a>Maximum Likelihood Estimation</h3><p>前面對 Mutual information 有了概念以後，</p>
+<p>下來就是真的去計算它，</p>
+<p>並且利用它來找出 syntagmatic relation 了。</p>
+<p>我們要用的方法是 Maximum Likelihood Estimation（最大概似估計）。</p>
+<p>這名字聽起來一樣很炫砲，</p>
+<p>但它的想法其實超簡單！</p>
+<blockquote>
+<p>只要不是出現在數理統計裡的話</p>
+</blockquote>
+<p>舉一個常見的例子：擲硬幣。</p>
+<p>擲硬幣可以表示成一個 random variable: <code>x</code>，</p>
+<p>假設這個 <code>x</code> 的機率分佈是 <code>p(x)</code>。</p>
+<p>但其實我們不知道這個機率是不是公正的，</p>
+<p>先進行了一次觀察，</p>
+<p>而在這次觀察中擲了一萬次，<del>然後就媽媽手</del></p>
+<p>結果發現很剛好的有 5000次正面、5000次反面，</p>
+<p>因此觀察後得到了一個 <code>p&#39;(x)</code>，</p>
+<p>假設觀察後的 <code>p&#39;(x)</code> 跟真正的 <code>p(x)</code> 分佈一致，</p>
+<p>那 <code>p(x)</code> 產生 <code>p&#39;(x)</code> 的「可能性」就是「最大」的。</p>
+<p>用「觀察出來的機率分佈」去推論「真正的機率分佈」，</p>
+<p>並最大化觀察結果等於真實機率分布的可能性，</p>
+<p>這就是「Maximum Likelihood Estimation」的精神啦！</p>
+<p>有了上述直覺後，再看看更嚴謹的數學定義，</p>
+<p>我們會寫出一個 likelihood function：</p>
+<p>$$<br>arg \, max_p p(x) = argmax \prod_i p1(x_i)<br>$$</p>
+<p>我們要找可以最大化這個 function 的機率分佈： p。</p>
+<blockquote>
+<p><code>argmax</code>：</p>
+<p>這個符號的意思就是要找出輸入後能夠最大化後方這個算式值的 arguments，</p>
+<p>有時候很佩服數學家想得到這麼奇葩的符號表示法 QQ</p>
+</blockquote>
+<p>再來看最後一個簡單例子，是從<a href="http://ccckmit.wikidot.com/st:maximumlikelihood" target="_blank" rel="external">陳鍾誠老師的網站上引用的</a>。</p>
+<p>可以表現如何套用這個公式並且指出 Maximum likelihood estimation 的問題。</p>
+<p>假設我們擲了一枚硬幣十次，有六次為正面，四次為反面。（這個擲十次硬幣其實就是一個 random variable: X）</p>
+<p>我們看看下面三個機率模型可能產生 X 的機率有多少。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">p1(正) = 0.5 ; p1(反) = 0.5</div><div class="line">p2(正) = 0.2 ; p2(反) = 0.8</div><div class="line">p3(正) = 0.4 ; p3(反) = 0.6</div></pre></td></tr></table></figure>
+<p>把上面的機率模型帶進去 likelihood function：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">p1(x)= 0.5^4 ∗ 0.5^6 = 0.00097656</div><div class="line">p2(x)= 0.2^4 ∗ 0.8^6 = 0.00041943</div><div class="line">p3(x)= 0.4^4 ∗ 0.6^6 = 0.00119439</div></pre></td></tr></table></figure>
+<p>會發現 <code>p3</code> 這個得到的值最高，</p>
+<p>可是對於投硬幣來說，其實 <code>p1</code> 才是更正確的模型才對，</p>
+<p>這也就是 MLE(maximum likelihood estimation）的缺點，</p>
+<p>如果樣本數太小或是有很嚴重偏誤的話，我們很容易見樹不見林 XD。</p>
+<p>總而言之，簡單地去推論 <code>P(X_w1=1)</code>、<code>P(X_w2=1)</code>、<code>P(X_w1=1, X_w2=1)</code>出現的機率：</p>
+<p><img src="http://i.imgur.com/j0nTpXS.png" alt="Esi of p"></p>
+<blockquote>
+<p>為什麼找這三個是因為找出來後，</p>
+<p>其他都可以從這三個機率去推導</p>
+</blockquote>
+<p>我們就從這些觀察值中去假設機率是這樣，</p>
+<p>就是用到了前面敘述的「最大概似估計方法」。</p>
+<p>不過這樣的做法有個顯而易見的小缺點，</p>
+<p>當我們觀察的樣本中，有些字可能從來沒出現過時，</p>
+<p>它的機率會被估計成 0，</p>
+<p>但我們的樣本可能相對很小，</p>
+<p>直接就這樣斷定這個字不可能出現絕非好事。</p>
+<p>所以要來介紹一下一個小技巧：<strong>Smoothing</strong></p>
+<h3 id="Smoothing"><a href="#Smoothing" class="headerlink" title="Smoothing"></a>Smoothing</h3><p>smoothing 的做法很簡單，</p>
+<p>就是對於每個情況發生的次數，</p>
+<p>都加上一個小小的 constant。</p>
+<p><img src="http://i.imgur.com/SF3lVWQ.png" alt="smoothing"></p>
+<p>如此就算我們觀察的樣本中完全沒有出現過某個情況，</p>
+<p>這個情況也會有一個小小的次數在，</p>
+<p>而不是直接斷定其機率為 0。</p>
+<blockquote>
+<p>雖然機率為 0 也不代表不可能發生，</p>
+<p>但這就不在這篇文章討論範圍內了。</p>
+</blockquote>
+<h2 id="Summary-of-Syntagmatic-mining-and-Analysis"><a href="#Summary-of-Syntagmatic-mining-and-Analysis" class="headerlink" title="Summary of Syntagmatic mining and Analysis"></a>Summary of Syntagmatic mining and Analysis</h2><p>複習一下三個從訊息論來的概念</p>
+<ul>
+<li><p>Entropy(<code>H(X)</code>)：量化隨機變數 X 的不確定性</p>
+</li>
+<li><p>Conditional Entropy(<code>H(X|Y)</code>)：在給定 Y 提件下隨機變數 X 的不確定性</p>
+</li>
+<li><p>Mutual Information（<code>I(X;Y)</code>）：描述 知道 Y 或 X 其中一個後，會降低多少預測的不確定性</p>
+</li>
+</ul>
+<p>在這階段得到的 word association 是相當 general 的，</p>
+<p>不管後續要做什麼應用，</p>
+<p>都有辦法跟其他算法結合。</p>
+<p>掌握了這些基石後，</p>
+<p>就可以來應用在稍微 deep 一點的技巧上了。</p>
+<h1 id="Topic-Mining-amp-Analysis"><a href="#Topic-Mining-amp-Analysis" class="headerlink" title="Topic Mining &amp; Analysis"></a>Topic Mining &amp; Analysis</h1><p>前面一個禮拜多有了對詞的基本了解後，</p>
+<p>要來做進階一點的分析和挖掘：Topic mining。</p>
+<h2 id="What-is-topic"><a href="#What-is-topic" class="headerlink" title="What is topic?"></a>What is topic?</h2><p>topic 其實就是一堆文字中的「主旨」(main idea)。</p>
+<p>隨著資料顆粒度不同，會有所改變。</p>
+<blockquote>
+<p>句子、文章、書籍的 topic 萃取會大大不同</p>
+</blockquote>
+<h2 id="How-to-discover-topics"><a href="#How-to-discover-topics" class="headerlink" title="How to discover topics"></a>How to discover topics</h2><h3 id="Intuition-1"><a href="#Intuition-1" class="headerlink" title="Intuition"></a>Intuition</h3><p><img src="http://i.imgur.com/oac33PW.png" alt="topic tasks"></p>
+<ol>
+<li><p>先找到有哪些 topics</p>
+</li>
+<li><p>將文本資料（document）涵蓋各個 topic 的機率找出來。</p>
+</li>
+</ol>
+<p>有了這個直覺後來更嚴謹的定義一下要做什麼，</p>
+<ul>
+<li><p>Input:</p>
+<ul>
+<li><p>text documents 的集合 <code>C={d_1, ..., d_N}</code></p>
+</li>
+<li><p>Number of topics</p>
+</li>
+</ul>
+</li>
+<li><p>Output</p>
+<ul>
+<li><p>k topics: <code>{theta_1, ..., theta_k}</code></p>
+</li>
+<li><p>Coverage of topcis in each <code>d_i</code>: <code>{pi_i1, ..., pi_ik}</code></p>
+</li>
+</ul>
+</li>
+</ul>
+<p>$$<br>j = 1, 2 … k<br>$$</p>
+<p>$$<br>i = 1, 2 … N<br>$$</p>
+<p>$$<br>\sum \pi_{ij} = 1<br>$$</p>
+<p>再來的問題就是怎麼找出 theta 了</p>
+<h3 id="Term-as-Topic"><a href="#Term-as-Topic" class="headerlink" title="Term as Topic"></a>Term as Topic</h3><p>最直觀的方法就是從所有文本中，</p>
+<p>挑出可以當作 Topic 的「詞」(word = term)。</p>
+<ul>
+<li><p>Parse 所有的 text 拿到 candidate terms</p>
+</li>
+<li><p>設計一個 scoring function 來判定各個 candidate term 是不是適合當作 topic</p>
+</li>
+<li><p>選擇 k 個有最高分的 terms，但盡可能最小化冗餘</p>
+<ul>
+<li>冗餘的意思有點太抽象，意思就是有幾個 topic 如果都長得很像，比如說「車子」、「汽車」、「車車」，那只要選擇一個當作 topic 就好</li>
+</ul>
+</li>
+</ul>
+<p>接著就直接來看看 term as topic 的做法。</p>
+<p>最簡單的方式就是直接計算次數，觀察其佔的比例：</p>
+<p><img src="http://i.imgur.com/m66yQ2f.png" alt="comp by freq"></p>
+<p>簡單的說 <code>pi</code> 就是每個 term 在每個 document(<code>d_i</code>) 中所佔的比率，</p>
+<p>而 <code>theta</code> 就是各個 term 了。</p>
+<p>最後算出來的 <code>pi_ij</code> 就會是<code>theta_j</code>/(<code>document_i</code>中所有 term 出現的次數)，</p>
+<p>其實看的就是選的這個字在某份文件中跟其他 topics（這裡是 terms）所佔的比率，</p>
+<p>最高的話，就判定它可能會是屬於 topic。</p>
+<p>但是直接拿實際例子來檢驗，</p>
+<p>馬上會發現一個大問題：</p>
+<p>以下節錄自一則 NBA 球賽的報導：</p>
+<blockquote>
+<p>Cavaliers vs. Golden State Warriors: NBA playoff finals … basketbal … <code>travel</code> to Cleveland … <code>star</code> …</p>
+</blockquote>
+<p>$$<br>\theta_1 = “sports”<br>$$</p>
+<p>$$<br>\theta_2 = “travel”<br>$$</p>
+<p>$$<br>\theta_3 = “science”<br>$$</p>
+<p>出現 “sports”的次數為 0，</p>
+<p>而出現 “travel” 的次數為 1。</p>
+<p>所以這個運動新聞的 topic 在上述方法中反而會被歸類到 sports 去。</p>
+<p>很明顯的，不能只看 “Sports” 這個字，</p>
+<p>應該要把相關的字也加進來才對。</p>
+<p>但如果把 related word 也加進來，</p>
+<p>那 <code>star</code> 這個字就會有點 tricky 了，</p>
+<p>因為 <code>star</code> 有模糊的空間可以被解釋，</p>
+<p>除了表示明星之外，它也可能是指真正的星星，</p>
+<p>會與 <code>science</code> 產生聯繫（天文物理學）。</p>
+<p>總結一下 term as topic 會遇到的問題</p>
+<ul>
+<li><p>Lack of expressive power</p>
+<ul>
+<li>只能找出簡單的 topic，太過複雜就無法（前面都是以單一個詞來切分 topic）</li>
+</ul>
+</li>
+<li><p>Incompleteness in vocabulary coverage</p>
+<ul>
+<li>對於找出相關的字這件事表現不佳</li>
+</ul>
+</li>
+<li><p>Word sense ambiguity</p>
+<ul>
+<li>無法處理詞彙間的 ambiguity （最後說到的 <code>star</code> 問題）</li>
+</ul>
+</li>
+</ul>
+<h1 id="Probabilistic-Topic-Models"><a href="#Probabilistic-Topic-Models" class="headerlink" title="Probabilistic Topic Models"></a>Probabilistic Topic Models</h1><p>假如 term as topic 行不通就兩手一攤說沒辦法那也太遜，</p>
+<p>所以馬上要來優化前面的 topic mining 方法：</p>
+<p>回顧一下上面提到 term as topic 會遇到的問題，</p>
+<p>以及概念上應該要如何解決：</p>
+<ul>
+<li><p>Lack of expressive power</p>
+<ul>
+<li>只能找出簡單的 topic，太過複雜就無法</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>解決方法： <code>Topic: {Multiple Words}</code></p>
+<p>一個字當 topic 不夠，你有試過好多個一起嗎？</p>
+</blockquote>
+<ul>
+<li><p>Incompleteness in vocabulary coverage</p>
+<ul>
+<li>對於找出相關的字這件事表現不佳</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>解決方法： 對於 word 加上權重</p>
+</blockquote>
+<ul>
+<li><p>Word sense ambiguity</p>
+<ul>
+<li>無法處理詞彙間的 ambiguity （最後說到的 <code>star</code> 問題）</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>解決方法： Split an ambiguous word</p>
+</blockquote>
+<p>首先要做的事情就是小小的改變一下選取的 term: <code>theta</code>，</p>
+<p>它不再是一個個的單詞，</p>
+<p>而是一個詞的機率分配，這絕對是概念上的一個大進步，</p>
+<p>先記著 <code>theta</code> 代表的是機率分配這件事，</p>
+<p>直接看下方這張圖：</p>
+<p><img src="http://i.imgur.com/fA4tAEF.png" alt="prob"></p>
+<p>舉 “Sports” 為例子，這代表 “Sports”這個分配底下，</p>
+<p>裡面會出現詞的機率就是長這個樣子。</p>
+<blockquote>
+<p>這裡的機率分配已經做過 smoothing 的處理，所以不會有 0</p>
+</blockquote>
+<p>$$<br>V = set(w_1, w_2, …)<br>$$</p>
+<p>這其實就是字典檔，裡面裝滿了各種 words(<code>w</code>)。</p>
+<p>而令人好奇的是 <code>p(w | theta)</code>代表的意義是什麼，</p>
+<p>舉例子可能會清楚一點，</p>
+<p><code>theta_1</code> = topic 為 “Sports” 的機率分配，</p>
+<p><code>p(&quot;game&quot; | theta_1)</code>的意思就是在知道屬於 <code>theta_1</code> 的條件下，</p>
+<p>“game” 這個字出現的機率。</p>
+<p>也因此把每個 topic 當條件下出現的機率加總起來就會是 1。</p>
+<p>上面那張圖中也把跟 topic 較不相關的字標成黑色，</p>
+<p>可以看到它們在所屬 topic 下出現的機率明顯是較低的。</p>
+<p>看一下這種把 <code>theta</code>當分配來看待的做法有沒有解決上述問題：</p>
+<ul>
+<li>Lack of expressive power</li>
+</ul>
+<blockquote>
+<p>解決方法： 一個 topic 底下已經可以有多個字，這些字組合起來可以變成一個相當複雜的 topic</p>
+</blockquote>
+<ul>
+<li>Incompleteness in vocabulary coverage</li>
+</ul>
+<blockquote>
+<p>解決方法： 現在每個字在所屬 topic 中都有其自己的權重</p>
+</blockquote>
+<ul>
+<li>Word sense ambiguity</li>
+</ul>
+<blockquote>
+<p>解決方法：現在在不同 topic 中出現的同樣字會有不同的機率</p>
+</blockquote>
+<p>其實我也蠻驚訝只是換個表現的方式，</p>
+<p>就能夠帶來這樣的成效，</p>
+<p>下面就正式用機率模型的方式來表現 topics：</p>
+<p><img src="http://i.imgur.com/Ji9yzux.png" alt="prob model"></p>
+<blockquote>
+<p>注意：theta 是一個 term 的「分布」</p>
+</blockquote>
+<p>而 <code>pij</code> 就是該 topic 在這個 <code>document_j</code> 中的「覆蓋率」，</p>
+<p>假如 <code>pij</code> 的覆蓋率越高，代表它越可能是屬於 <code>theta_i</code> 這個 topic。</p>
+<h2 id="Generative-Model"><a href="#Generative-Model" class="headerlink" title="Generative Model"></a>Generative Model</h2><p>雖然前面已經提到用機率模型的方式來呈現 topics，</p>
+<p>但是要被分析的原始文本資料（text data），本身是沒有機率分布的，</p>
+<p>所以要自己「生成」一個有機率分佈的 model 給它們，</p>
+<p>這也就是我待會要介紹的概念： Generative model。</p>
+<p><img src="http://i.imgur.com/f0eu5c1.png" alt="generative model"></p>
+<p>概念就是如上圖這個樣子，有以下幾個步驟：</p>
+<ul>
+<li><p>Modeling of Data Generation: <code>P(Data |Model, lambda)</code></p>
+</li>
+<li><p>lambda 是所有會產生 text data 的參數：</p>
+<ul>
+<li><p>包括<code>{theta_1,...theta_k}, {pi_11, ..., pi_1k}... {pi_N1, ... , pi_Nk}</code></p>
+</li>
+<li><p>要求得的答案是：知道哪些參數後，能夠讓我們在知道這些參數的條件下，讓產生出 <code>Data</code>的機率最大化。</p>
+</li>
+<li><p>如果是上面圖來說的話，就是 <code>lambda*</code> 這個 parameter</p>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>上述資料的 lambda 是一維的，只是為了方便圖像化，</p>
+<p>事實上的 model 不太可能長這麼簡單 XD</p>
+</blockquote>
+<h2 id="Statistical-Language-Models-以下都以-LM-簡稱"><a href="#Statistical-Language-Models-以下都以-LM-簡稱" class="headerlink" title="Statistical Language Models(以下都以 LM 簡稱)"></a>Statistical Language Models(以下都以 LM 簡稱)</h2><ul>
+<li><p>其實就是一連串字的機率分配</p>
+<ul>
+<li><p><code>p(&quot;Today is Wednesday&quot;)</code> ~= 0.001</p>
+</li>
+<li><p><code>p(&quot;Today Wednesday is &quot;)</code> ~= 0.00000000001</p>
+</li>
+</ul>
+</li>
+<li><p>上下文相關（ context dependent）</p>
+</li>
+<li><p>就是一種用機率方法來生成文字的 model，所以也可以稱作是 “Generative model”</p>
+<p>介紹完概念，就直接來看有哪些 model 可以用。</p>
+</li>
+</ul>
+<h2 id="Unigram-LM"><a href="#Unigram-LM" class="headerlink" title="Unigram LM"></a>Unigram LM</h2><p>這是一個最簡單的 model，</p>
+<p>它假設產生的每個 word 都是相互獨立的。</p>
+<blockquote>
+<p>假如你學過 naive Bayes 就會發現這比 naive 還要更 naive</p>
+</blockquote>
+<p>例子：</p>
+<p>$$<br>p(“today \, is \, Wed”) = p(“today”)p(“is”)p(“Wed”)<br>$$</p>
+<p>再來看關於 Unigram LM 更實際的例子：</p>
+<p><img src="http://i.imgur.com/RHhv2lr.png" alt="unigram sampling"></p>
+<p>topic 1 是 text mining，</p>
+<p>下方的 model 就是已知在這個 topic 的條件下，</p>
+<p>各個字出現的機率分配。</p>
+<p>從這個分配中去取樣本組成一個 data，</p>
+<p>那很自然就會是屬於 text mining 的 document。</p>
+<p>(Topic 2 就不再重複敘述)</p>
+<p>但反過來從看到 data ，去判定它屬於哪個 topic，</p>
+<p>才是我們真正想做的事情。</p>
+<p>最直觀的方法就是前面提到的最大概似估計（Mamimum Likelihood Estimation）：</p>
+<p><img src="http://i.imgur.com/Rxog1gI.png" alt="estimation of unigram lm"></p>
+<p>但最大概似估計有它的限制，</p>
+<p>在上面這張圖中的下方是我們去做分析和探勘時，</p>
+<p>要一再問自己的兩個問題：</p>
+<ul>
+<li><p>這就是最好的方法了嗎？</p>
+</li>
+<li><p>何謂「最好」？</p>
+</li>
+</ul>
+<p>接著繼續探討怎麼去更優化這個估計方式。</p>
+<h2 id="Maximum-Likelihood-v-s-Bayesian"><a href="#Maximum-Likelihood-v-s-Bayesian" class="headerlink" title="Maximum Likelihood v.s Bayesian"></a>Maximum Likelihood v.s Bayesian</h2><p>Maximum Likelihood 的問題：</p>
+<ul>
+<li>樣本數過小時，估計會很不準</li>
+</ul>
+<blockquote>
+<p>舉例：</p>
+<p>投擲硬幣兩次都正面，就估計這硬幣出現正面的機率為 1，</p>
+<p>可見當觀察的資料過少時，很容易得到有極大偏誤的結果</p>
+</blockquote>
+<p>在這裡要介紹另一個簡單，但是相當高效的方法：</p>
+<p><strong>Bayes Rule</strong>，也就是大家常在說的貝氏定理。</p>
+<p>那 Bayes Rule 的核心概念是什麼呢？</p>
+<p>直接舉個例子來說明：</p>
+<p>假設現在有一個袋子裡面有 5 個球，</p>
+<p>其中 4 顆黑球，1 顆白球，</p>
+<p>很明顯地，拿出黑球的機率就是 4/5 = 0.8。</p>
+<p>注意，這是在「知道所有情況下」才能這樣簡單的就拿到機率，</p>
+<p>但是在現實生活的分析中，</p>
+<p>常常會不知道所有的情況，</p>
+<p>而貝氏機率的哲學就是從結果逆著去推論現實生活中的情況。</p>
+<p>舉上述例子就是從袋子裡拿球三次，其中出現一次黑球、兩次白球，</p>
+<p>再從這些觀察的結果去推論拿出球顏色的機率分布是什麼，</p>
+<p>這就是 Bayes Rule。</p>
+<p>這聽起來很像 Maximum likelihood estimation，</p>
+<p>不過他們本來就不是相斥的存在，</p>
+<p>先耐著性子繼續看下去要怎樣應用它。</p>
+<p>假如你不懂條件機率和貝氏定理的話，強烈建議你看一下這篇文章：</p>
+<blockquote>
+<p><a href="http://mindhacks.cn/2008/09/21/the-magical-bayesian-method/" target="_blank" rel="external">数学之美番外篇：平凡而又神奇的贝叶斯方法</a></p>
+<p>看完這篇補充資料前面的例子之後，一定就懂貝氏的概念是什麼了。</p>
+<p>這裡不花篇幅去解釋太多，專注在 Bayes 在統計語言模型上的應用</p>
+</blockquote>
+<p><img src="http://i.imgur.com/OHaWuVi.png" alt="bayes"></p>
+<p>從最大化 <code>P( X | theta)</code> 變成最大化<code>P( theta | X)</code> 或是 <code>P(X | theta) * P(theta)</code>，</p>
+<blockquote>
+<p><code>P( theta| X)</code> 的意思是：</p>
+<p>在符合 X 條件下，是屬於 <code>theta</code>這個 topic的機率。</p>
+<p>而它也不會跟 <code>P(X | theta) * P(theta)</code>相等，</p>
+<p>而是成正比的關係。</p>
+</blockquote>
+<p>所以關鍵問題就在於如何定義 prior （ <code>p(theta)</code>）。</p>
+<p>看完例子後，</p>
+<p>我想直接拿課堂簡報中的圖來說明比起直接用最大概似估計，</p>
+<p>使用 Bayesian estimation 有什麼樣子的進步：</p>
+<p><img src="http://i.imgur.com/NNUJgRL.png" alt="illustration of bayesian"></p>
+<p>你會發現最右邊的那個分配就是 MLE 得到的結果，</p>
+<p>我們要找的那個是介於 prior 跟 MLE 中間的 posterior mode，</p>
+<p>所以這個 estimator 也叫做 MAP(Maximum posteriori estimate)。</p>
+<p>除了比直接用 MLE 考慮得更多一些之外，</p>
+<p>也更加 general。</p>
+<p>前面也有提到貝氏和 MLE 的關係，</p>
+<p>這裡其實也有個很直覺得解釋，</p>
+<p>那就是如果 <code>P(theta)</code> 是個 uniform 分配（也就是說每個出現的機率都一樣時），</p>
+<p>那基本上就等於是沒辦法提供任何訊息，</p>
+<p>因此等於就是在求 <code>P(X|theta)</code>，</p>
+<p>即原先使用 MLE 的方法。</p>
+<h2 id="Mining-One-Topic"><a href="#Mining-One-Topic" class="headerlink" title="Mining One Topic"></a>Mining One Topic</h2><p>接著來運用上述 Bayes rule 的模型，</p>
+<p>不過為了專注在概念的解釋上，先用了個簡化的版本，</p>
+<p>Mining one topic 的意思是假設只有一個 topic，</p>
+<p>所以 input 從原先的: <code>C={d}, V, k</code> ，</p>
+<p>變成 <code>C={d}, V</code>（k 固定為 1），</p>
+<p>因此也不會有 <code>pi</code> 這個 output，</p>
+<p>畢竟在這個例子裡不用去算在每個 document 中的 coverage 。</p>
+<blockquote>
+<p>只有一個 topic 的話，那代表不管在哪個 d 裡面，</p>
+<p>coverage 都會是 100%。</p>
+</blockquote>
+<p>首先要來定義建立 Language Model 前該有的設定：</p>
+<p><img src="http://i.imgur.com/523dHuM.png" alt="language model setup"></p>
+<p>比較需要說明的是 Likelihood function，</p>
+<p>後續會相當頻繁的遇到這個 function ，</p>
+<p>所以理解它背後的含義是相當重要的，更別說它其實是個很直觀的函數 XD</p>
+<p>這只是數學符號比較多，但沒有多出什麼新的東西來。</p>
+<p>前面有說到我們用的模型是 Unigram LM，</p>
+<p>所以假設每個詞出現在 text 中的機率都是相互獨立，</p>
+<p>因此才能直接用相乘的來取得。</p>
+<p>接著看到 <code>p(x_1 | theta)</code>.. =&gt; <code>p(w_1|theta)^c(w_1, d)...</code> 的轉化，</p>
+<p>看起來很嚇人，實際上只是從 random variable 轉化成一般機率的形式而已：</p>
+<p><code>x_i</code> 其實是指 <code>w_i</code> 出現在 document: <code>d</code> 中的隨機變數，</p>
+<p>是「機率」。</p>
+<p>在右上角的 <code>c(w_i, d)</code> 指的是 <code>w_i</code> 真正出現在 data <code>d</code>中的次數，</p>
+<p>因為在 Unigram LM 中，每個字出現的機率是相互獨立的，</p>
+<p>也就是說同一個字重複出現的機率也是獨立的，</p>
+<p>把 <code>p(w_i | theta)</code> 相乘起來就會是這個字出現的機率，</p>
+<p>也就成功從 random variable 轉化成一般機率的形式。</p>
+<p>弄懂 likelihood 後，</p>
+<p>就能直接來找哪些參數 <code>(theta_1,...  theta_M)</code> 可以最大化 <code>p(d| theta)</code>。</p>
+<p>$$<br>\prod_{i=1}^M \, \theta_i^{c(w_i, \, d)}<br>$$</p>
+<p>為了方便計算，將連乘的部分取對數，</p>
+<p>這樣做的好處就是直接化成相加的形式：</p>
+<p>$$<br>\sum_{i=1}^M c(w_i, d) log \theta_i<br>$$</p>
+<blockquote>
+<p>這樣做的意義完全就是為了數學上好算 XD</p>
+</blockquote>
+<p>記得前面 <code>theta</code> 滿足這個限制後：</p>
+<p>$$<br>\sum_{i=1}^M \theta_i = 1<br>$$</p>
+<p>再回到原本要解決的問題，</p>
+<p>怎麼找到有辦法最大化下面這個函數輸出值的 <code>theta</code> 呢？</p>
+<p>$$<br>\sum_{i=1}^M c(w_i, d) log \theta_i<br>$$</p>
+<p>答案是—— Lagrange Multiplier Method。</p>
+<blockquote>
+<p>想瞭解更多關於 Lagrange 的原理可以看這邊</p>
+<p> <a href="http://episte.math.ntu.edu.tw/entries/en_lagrange_mul/" target="_blank" rel="external">Lagrange 乘數法</a></p>
+<p>我大學最討厭的就是天才少年一號尤拉，以及天才少年二號 Lagrange。</p>
+</blockquote>
+<p>你可以點上方的參考資料去深入瞭解，</p>
+<p>不過你也可以在不知道原理的情況下繼續直接套用公式，</p>
+<p>只要懂得簡單的微積分就好 XD</p>
+<p>要找參數有辦法使一個凹函數出現最大值，</p>
+<p>只要取個微分等於 0，再去解開參數等於多少就可以。</p>
+<p>Lagrange 就是將原本的 function 轉化成以下這個形式：</p>
+<p>$$<br>\sum_{i=1}^M c(w_i, d) log \theta_i + \lambda( sum \, of \, (\theta_i) - 1)<br>$$</p>
+<p>前面有提到：</p>
+<p>$$<br>\sum_{i=1}^M \theta_i = 1<br>$$</p>
+<p>所以加上 lambda 那一項是不會影響 function 本身的，</p>
+<p>但是加上 lambda 之後，我們在微分後可以多做許多事情：</p>
+<p><img src="http://i.imgur.com/mHpRT2P.png" alt="cal"></p>
+<p>這時候可能你會有個感覺：這只是個數學解題而已嘛！</p>
+<p>最後可以得到 <code>theta</code>與 <code>lambda</code> 間的關係，</p>
+<p>再度回到上面 theta 加總起來是 1 的等式，</p>
+<p>然後把 </p>
+<p>$$<br>\theta_i =  - \frac{c(w_i, \, d)}{\lambda}<br>$$</p>
+<p>代入</p>
+<p>$$<br>\sum_{i=1}^M \theta_i = 1<br>$$</p>
+<blockquote>
+<p>吃我 der lagrange 喇</p>
+</blockquote>
+<p>最後再將得到的結果 </p>
+<p>$$<br>\lambda = -\sum_{i=1}^N c(w_i, \,d)<br>$$</p>
+<p>代入</p>
+<p>$$<br>\hat{\theta_i} = \frac{c(w_i,d)}{\lambda}<br>$$</p>
+<p><img src="http://i.imgur.com/kHB5jYe.png" alt="cal result"></p>
+<blockquote>
+<p>上面加了一個小帽子唸作 hat，在統計學裡面這樣標記，</p>
+<p>通常表示它是代表「估計」出來的機率，</p>
+<p>而非是真正的機率。（真實的機率其實不得而知）</p>
+</blockquote>
+<p>這個結果相當相當的直覺，</p>
+<p>得到的結果其實就是個 normalized count。</p>
+<blockquote>
+<p>直接拿 word 在 document 中出現的次數除以 document 的總字數。</p>
+</blockquote>
+<h2 id="Summary-of-one-topic-mining"><a href="#Summary-of-one-topic-mining" class="headerlink" title="Summary of one topic mining"></a>Summary of one topic mining</h2><p>前面敘述的模型有著我們從第一個禮拜就在討論的問題，</p>
+<p>就是它沒辦法過濾掉 “the”, “a” 這種每個文章都有的常見字，</p>
+<p>這些常見字其實沒有跟 topic 有很高的相關性，</p>
+<p>但在 <code>p(w|theta)</code> 時卻會有著不低的機率。</p>
+<p><img src="http://i.imgur.com/TonnmLC.png" alt="result"></p>
+<p>不過下一個禮拜的課程才會進入要怎麼解決這個問題。</p>
+<h1 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h1><p>這一週蠻像以前在學機率論的，不過是簡化版的。</p>
+<p>而且相較於以前學習的純理論，到考試再被證明題屌虐一番，</p>
+<p>這一次有種 divide and conquer 的感覺，</p>
+<p>我們有個很明確的目標和問題要解決，</p>
+<p>至少我自己在經過這禮拜課程後，</p>
+<p>對於使用統計語言模型以及 topic mining 有了初步的理解，</p>
+<p>雖然看到 Lagrange 的時候罵了幾句髒話，</p>
+<p>但從基石開始慢慢學起的感覺就是這個樣子，</p>
+<p>多了點思考和研究，少了很多很多的浮躁。</p>
+<p>也推薦看完後可以去 Coursera 上做做練習題，</p>
+<p>看看自己是不是真的懂了。</p>
+<p>最後補充一下為什麼有些東西都重複解釋，</p>
+<p>其實訊息的冗余對於保存訊息是很有意義的，</p>
+<p>當初我們有辦法解密古埃及文，</p>
+<p>就是因為羅賽塔石碑上用了三種語言重複了一樣的訊息，</p>
+<p>語言學家才能把上面的資訊解密，</p>
+<p>這裡的訊息就是對於 text mining 的知識，</p>
+<p>我相信這也是相同的道理。</p>
+<blockquote>
+<p><a href="https://zh.wikipedia.org/wiki/%E7%BE%85%E5%A1%9E%E5%A1%94%E7%9F%B3%E7%A2%91" target="_blank" rel="external">羅賽塔石碑</a></p>
+</blockquote>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><ul>
+<li><p><a href="https://www.coursera.org/learn/text-mining/home/welcome" target="_blank" rel="external">Coursera: Text Mining and Analytics 來自於 伊利諾伊大學香檳分校</a></p>
+</li>
+<li><p><a href="http://episte.math.ntu.edu.tw/articles/mm/mm_13_3_01/" target="_blank" rel="external">熵 (Entropy) - 李天岩</a></p>
+</li>
+<li><p><a href="http://episte.math.ntu.edu.tw/entries/en_lagrange_mul/" target="_blank" rel="external">Lagrange 乘數法</a></p>
+</li>
+<li><p><a href="http://mindhacks.cn/2008/09/21/the-magical-bayesian-method/" target="_blank" rel="external">数学之美番外篇：平凡而又神奇的贝叶斯方法</a></p>
+</li>
+<li><p>數學之美：《第 6 章：信息的度量和作用》</p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/07/30/front-end-career-job/" class="prev">PREV</a><a href="/2016/07/15/illinois-text-mining-week-1/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/07/21/illinois-text-mining-week-2/';
+var disqus_title = 'Text Mining &amp; Analysis： week 2';
+var disqus_url = 'http://abalone0204.github.com/2016/07/21/illinois-text-mining-week-2/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

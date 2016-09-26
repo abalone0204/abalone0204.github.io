@@ -1,0 +1,647 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 淺析 serverless 架構與實作 · De-bug: 一鍵跑版</title><meta name="description" content="淺析 serverless 架構與實作 - Tsung-Chen Ku"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">淺析 serverless 架構與實作</h1><div class="post-time">May 22, 2016</div><div class="post-content"><p>Serverless ，不是沒有 server，而是不用去擔心維護 server 這件事，</p>
+<p>不管是在部署還是開發，都是以一個個 function 為單位，</p>
+<p>這帶來了程式碼上的高度 decoupling，但同時也因為過大的彈性，</p>
+<p>常常搞的我們無所適從，就像這張圖一樣：</p>
+<p><img src="http://i.imgur.com/lP3wcnh.jpg" alt="howto"></p>
+<p>serverless 更考驗著我們對系統設計的思維，</p>
+<p>這是一篇非常粗淺的文章，</p>
+<p>目的在帶領對 serverless 有興趣的人無痛的入門，</p>
+<p>不管是在概念上，還是在實務的使用上。</p>
+<blockquote>
+<p>假如你是懶得看文章的人，可以直接到我的 <a href="https://github.com/abalone0204/serverless-demo-with-dynamodb-node" target="_blank" rel="external">github repo</a> 上面看</p>
+<p>有哪裡寫錯的話可以提個 issue，覺得讚讚讚的話也可以給星星以茲鼓勵。</p>
+</blockquote>
+<a id="more"></a>
+<p>試想當你是一個單槍匹馬的開發者時，你絕對會希望能真正專心在開發，</p>
+<p>而不是一天到晚擔心機器有沒有死掉，或者配置環境就花了大半時間。</p>
+<p>我只是一個前端工程師，對於後端的知識甚是淺薄，</p>
+<p>serverless 對我而言是個很合理的選擇，</p>
+<p>但這不代表我不在乎任何後端的專業性，</p>
+<p>更不代表著後端工程師使用 serverless 架構就是代表實力不夠。</p>
+<p>相反的，我認為後端工程師如果能從管理機器中解放，</p>
+<p>設計出更好的 serverless 架構以及更專注在程式本身的邏輯上，</p>
+<p>那從 serverless 上能獲得的增益一定也是相當驚人的。</p>
+<blockquote>
+<p>看著我們虛擬化的趨勢 =&gt; VM =&gt; Container =&gt; Docker 的興起</p>
+<p>儘管做法略有不同，但方向是一致的，</p>
+<p>都是想讓程式開發者更能專注在程式本身，而不是管理機器上</p>
+<p>話說回來，前端後端的分界點一直都是個有爭議的問題，</p>
+<p>不過就不在這裡去討論了</p>
+</blockquote>
+<p>這篇會需要用到數個 aws 的服務，不過為了讓事情更單純，</p>
+<p>我只會用到 IAM, DynamoDB, API Gateway, CloudWatch 以及 Lambda，</p>
+<p>都不熟悉這些也沒有關係，因為我在寫完這一段之前， </p>
+<p>也只是大略的把文件掃過去，也不用擔心縮寫令人看不懂，</p>
+<p>因為我最討厭的就是這種縮來縮去的東西，</p>
+<p>所以接下來都會在提到的地方解釋我們正在處理的是什麼。</p>
+<blockquote>
+<p>以往都是直接用 EC2 開一台機器，</p>
+<p>要用什麼直接當自己家的在上面裝就是了。</p>
+<p>（當然可以學一些東西自動化這流程： chef，不過這不是這篇的重點）</p>
+</blockquote>
+<h1 id="Catalogue"><a href="#Catalogue" class="headerlink" title="Catalogue"></a>Catalogue</h1><ul>
+<li><p><a href="#Introduction">Introduction</a></p>
+<ul>
+<li><p><a href="#優點">優點</a></p>
+</li>
+<li><p><a href="#限制與風險">限制與風險</a></p>
+</li>
+<li><p><a href="#Why-serverless-framework">Why serverless framework</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#Setup-開發環境的建置">Setup 開發環境的建置</a></p>
+<ul>
+<li><p><a href="#為你的-api-建立一個「role」">為你的 api 建立一個「role」</a></p>
+</li>
+<li><p><a href="#Create-Project">Create Project</a></p>
+</li>
+<li><p><a href="#Create-First-function">Create First function</a></p>
+</li>
+<li><p><a href="#Deployment">Deployment</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#Abstraction">Abstraction</a></p>
+<ul>
+<li><p><a href="#Overview">Overview</a></p>
+</li>
+<li><p><a href="#Source event">Source event</a></p>
+</li>
+<li><p><a href="#Context">Context</a></p>
+</li>
+<li><p><a href="#handler-js"><code>handler.js</code></a></p>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><p><a href="#Implementation-Simple-RESTful-api">Implementation: Simple RESTful api: Simple RESTful api</a></p>
+<ul>
+<li><p><a href="#Why">Why</a></p>
+</li>
+<li><p><a href="#Log">Log</a></p>
+</li>
+<li><p><a href="#Create-an-item">Create an item</a></p>
+</li>
+<li><p><a href="#Read-an-item">Read an item</a></p>
+</li>
+<li><p><a href="#Update-an-item">Update an item</a></p>
+</li>
+<li><p><a href="#Delete-an-item">Delete an item</a></p>
+</li>
+<li><p><a href="#List-items">List items</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#Conclusion">Conclusion</a></p>
+</li>
+<li><p><a href="#References">References</a></p>
+</li>
+</ul>
+<h1 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h1><p>這篇會著重在比較抽象化的概念上，</p>
+<p>而不是去針對特定的功能作 serverless 的實現，</p>
+<blockquote>
+<p>但不要誤會了，後面還是有一個簡易 restful api 的實作</p>
+</blockquote>
+<p>我認為能掌握以下幾個點，才是針對特定功能實現的基礎：</p>
+<ul>
+<li><p>Project 的架構</p>
+<ul>
+<li><p>對於設計一套 serverless architecture 的抽象概念</p>
+</li>
+<li><p>各個功能與 api 間對應的關係</p>
+</li>
+</ul>
+</li>
+<li><p>資料的處理 </p>
+<ul>
+<li><p>要能永久被儲存</p>
+</li>
+<li><p>CRUD 操作</p>
+</li>
+<li><p>Schedule：定時或是 routine 的去做一些事情(這一篇文章裡面不會提到)</p>
+</li>
+</ul>
+</li>
+<li><p>部署</p>
+<ul>
+<li>有新功能時我們要能夠部署上去</li>
+</ul>
+</li>
+<li><p>Log</p>
+<ul>
+<li>不然你 debug 是要通靈嗎</li>
+</ul>
+</li>
+</ul>
+<p>至於使用的語言會是 nodejs。</p>
+<h2 id="優點"><a href="#優點" class="headerlink" title="優點"></a>優點</h2><ul>
+<li><p>不需要自己管機器，以及近乎無限能力的 scale-out（你的財力夠的話）</p>
+</li>
+<li><p>相對便宜。因為我們是有執行 function 才收費</p>
+<ul>
+<li>如果只是自己要使用或是小型專案，基本上都會落在 free tier 區間</li>
+</ul>
+</li>
+<li><p>高度的解耦及靈活的配置</p>
+<ul>
+<li>不管你是想要製作 nano service 還是 micro service 你都能靈活地去組合</li>
+</ul>
+</li>
+</ul>
+<p>有人說過，當你手上只有錘子時，那你看到的所有東西都會是釘子。</p>
+<p>不過對於 <code>function</code> 這麼 general purpose 的東西來說，</p>
+<p>它的確能拿來解決一切計算相關的問題，端看你組合的方式對不對而已。</p>
+<h2 id="限制與風險"><a href="#限制與風險" class="headerlink" title="限制與風險"></a>限制與風險</h2><p>講了這麼多好處，現在當然要來講它的限制。</p>
+<ul>
+<li><p>有限的記憶體</p>
+</li>
+<li><p>timeout</p>
+<ul>
+<li>目前最多只能運算 300 秒，就會被強制結束掉</li>
+</ul>
+</li>
+<li><p>高度的解耦</p>
+<ul>
+<li>這看起來是好處，但必須要用跟以前不一樣的想法來設計程式，因為我們每次 function 運行完之後，就會把所有資源釋放出去</li>
+</ul>
+</li>
+<li><p>Latency</p>
+<ul>
+<li><p>因為我們是需要計算時，才會去要資源來運算，每次都算是一個 cold start，所以對 latency 完全無法容忍的服務，可能不適合。</p>
+</li>
+<li><p>實際上透過 schedule 可以一定程度的解決這問題</p>
+</li>
+</ul>
+</li>
+<li><p>風險</p>
+<ul>
+<li><p>Scale-out</p>
+<ul>
+<li>坦白說，如果是考慮到有沒有辦法 scale-out，那我想大部分情形，aws 都是沒問題的</li>
+</ul>
+</li>
+<li><p>API 更換</p>
+<ul>
+<li>因為我們以 function 為單位的高解耦，所以更換 API，不是一個讓人全面崩潰的風險</li>
+</ul>
+</li>
+<li><p><strong>服務被停用</strong></p>
+<ul>
+<li><p>我說一個字大家就懂了：Parse</p>
+</li>
+<li><p>當事情走到這一步的時候，基本上就沒啥救了，這就是我們冒著最大的風險</p>
+</li>
+<li><p>但就如同前面所言，我認為 serverless 是未來大勢所趨，也許不會所有的 project 都如此，不過大多數的中小型專案都會轉向朝這一架構邁進。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="Why-serverless-framework"><a href="#Why-serverless-framework" class="headerlink" title="Why serverless framework"></a>Why serverless framework</h2><ul>
+<li><p>過度的自由，失控的 decoupling</p>
+<ul>
+<li>框架給了我們更好結構化 project 的方式</li>
+</ul>
+</li>
+<li><p>Config 的設置以及部署 function 簡化</p>
+</li>
+<li><p>文件和 plugins</p>
+</li>
+<li><p>社群或公司支持</p>
+<ul>
+<li><p>Serverless 的官網上有說到，現在是由一群工程師全職在維護這個 framework</p>
+</li>
+<li><p>gitter 上問問題也幾乎馬上就能得到回答</p>
+</li>
+</ul>
+</li>
+<li><p>Apex?</p>
+<ul>
+<li><p>TJ 的產品，目前還在觀望中，但 serverless 看起來相對較穩定、成熟</p>
+</li>
+<li><p>不過光是 TJ 這個名字，就很值得一試</p>
+</li>
+<li><p>就像我前面說的，因為高度解耦的關係，其實要遷移過來「理論上」不是太難的事</p>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="Setup-開發環境的建置"><a href="#Setup-開發環境的建置" class="headerlink" title="Setup 開發環境的建置"></a>Setup 開發環境的建置</h1><p>我不認為一個環境的建置，是在把東西裝一裝之後就結束了，</p>
+<p>因為東西裝一裝之後，通常後續只會有更多的問題，</p>
+<p>而且一個 project 本來就需要在一開始就做好 deploy 的準備了。</p>
+<blockquote>
+<p>不部署的話幹嘛要用 aws 啊？囧</p>
+</blockquote>
+<p>完整一點的 setup 應該要包含了從 建置基本設定 =&gt; 部署 </p>
+<p>才算是真的結束，</p>
+<p>所以這一小節會從配置到部署都走過一次。</p>
+<blockquote>
+<p>AWS 的介面可能會因為時間的關係，與下方略有不同，</p>
+<p>但估計變動不會太大，知道要使用什麼功能比較重要，</p>
+<p>故我不會把操作介面的圖片放上來。</p>
+</blockquote>
+<h2 id="為你的-api-建立一個「role」"><a href="#為你的-api-建立一個「role」" class="headerlink" title="為你的 api 建立一個「role」"></a>為你的 api 建立一個「role」</h2><ul>
+<li><p>跟以往一樣，我認為建環境是最困難的部分</p>
+</li>
+<li><p>首先要建一個 <code>IAM</code> role</p>
+</li>
+</ul>
+<blockquote>
+<p>IAM(Identity and Access Management)</p>
+<p><code>IAM</code> 的功用就是讓你能夠管理使用者對於服務和資源所擁有的「權限」</p>
+<p>可以針對不同的使用者，制定不同的角色，</p>
+<p>舉例來說，如果你今天的 api 只想讓 user 從 s3 的 bucket 裡面讀一些靜態資源</p>
+<p>你就不會想要讓他擁有 access DynamoDB 的權限，懂？</p>
+<p><strong>IAM 是免費的</strong>。</p>
+</blockquote>
+<p>到 aws 選取 services，在拉下來一狗票的服務中，</p>
+<p>選擇 <code>IAM</code>。</p>
+<p>建立一個新的 User，名字就輸入：<code>serverless-admin</code>。</p>
+<p>建立好之後，</p>
+<p>把拿到的 <code>Access Key Id</code> 跟 <code>Secret Access Key</code> 給記下來，</p>
+<p>待會會用到。</p>
+<p>接著選擇剛剛建立的那個 user：<code>serverless-admin</code>，</p>
+<p>在 permissions 的地方加上新的 policy，</p>
+<p>這裡 aws 相當貼心的提供我們超大一坨的 policies 可供選擇，</p>
+<p>為了方便，我們直接選擇 <code>AdministratorAccess</code>。</p>
+<blockquote>
+<p>當在 production 環境時，這樣處理 permissions 不會是一個好主意 XD</p>
+<p>坦白說我覺得 permissions 會是一個令人頭痛的點</p>
+</blockquote>
+<h2 id="Create-Project"><a href="#Create-Project" class="headerlink" title="Create Project"></a>Create Project</h2><p>我們選擇了 <code>serverless-framework</code>這一套 serverless framework。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">npm i -g serverless</div><div class="line">serverless project create</div></pre></td></tr></table></figure>
+<p>會要你輸入名字以及剛剛的 access key id 跟 secret access key。</p>
+<p>接著還要選擇你想要你的 project 運行服務在的地區。</p>
+<p>再來稍後三分鐘之後， project 就會建好了。</p>
+<blockquote>
+<p>會生成一大堆東西，下面列出簡易版的解釋，</p>
+<p>看不懂也沒關係，之後在實作中就會碰到很多次了：</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">├── _meta // (.gitignored) 就是個存 meta data 的地方（config 之類的</div><div class="line">├── admin.env // (.gitignored)剛剛 create function 時的 AWS Profiles</div><div class="line">├── functions</div><div class="line">│   └── function1</div><div class="line">│       ├── event.json</div><div class="line">│       ├── handler.js</div><div class="line">│       └── s-function.json</div><div class="line">├── package.json // 就是 npm 的那個</div><div class="line">├── s-project.json // serverless 的套件管理</div><div class="line">└── s-resources-cf.json // 就是上述講到 CloudFormation 的描述檔</div></pre></td></tr></table></figure>
+<h2 id="Create-First-function"><a href="#Create-First-function" class="headerlink" title="Create First function"></a>Create First function</h2><p>先讓我們 focus 在 <code>function</code> 上，這些 config 真的都可以先放著沒關係。</p>
+<blockquote>
+<p>這不代表他們不重要，只是晚點再回來看他們是在做什麼</p>
+<p>如果你真的現在就等不及，也可以到 serverless 的官方文件看</p>
+<p><a href="http://docs.serverless.com/docs/project-structure" target="_blank" rel="external">Project structure</a></p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">serverless function create functions/posts</div></pre></td></tr></table></figure>
+<p>選擇 nodejs =&gt; Create Endpoint</p>
+<p>接著就可以看到多了一個 <code>functions</code> 資料夾，</p>
+<p>並且裡面跟著一個 <code>posts</code> 以及一些東西了。</p>
+<p>一樣我們只要知道自己現在建立了一些基礎建設，稍後再來回頭看這是什麼。</p>
+<h2 id="Deployment"><a href="#Deployment" class="headerlink" title="Deployment"></a>Deployment</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">serverless dash deploy</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">function - posts</div><div class="line">endpoint - posts - GET</div></pre></td></tr></table></figure>
+<p>這兩個都記得要選才會把東西部署上去 aws-lambda。</p>
+<p>選擇 deploy 之後稍待幾秒鐘，就可以看到回傳一個網址給你。</p>
+<p>這就是能夠執行我們剛剛部屬上去的 <code>posts</code> 的地方。</p>
+<p>如果你沒做任何更改，點進去後應該能看到</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123;&quot;message&quot;: &quot;Go Serverless! Your Lambda function executed successfully!&quot;&#125;</div></pre></td></tr></table></figure>
+<p>到這裡為止，我們才能不心虛的說：環境建完，可以繼續了。</p>
+<h1 id="Abstraction"><a href="#Abstraction" class="headerlink" title="Abstraction"></a>Abstraction</h1><h2 id="Overview"><a href="#Overview" class="headerlink" title="Overview"></a>Overview</h2><p>前面一直說到 serverless 架構是以 function 為單位去部署和開發，</p>
+<p>現在來對「lambda function」有個具體的抽象概念。（欸？</p>
+<p>先來個大略的概觀，你可以跟剛剛 create 的 project 對照著看：</p>
+<ul>
+<li><p>每個 function 可以有許多個 endpoint（進入點）</p>
+</li>
+<li><p>每個 endpoint 可以有許多個 method( GET, POST…)</p>
+</li>
+<li><p>Handler 則是 aws lambda 執行的進入點(就是 <code>handler.js</code>)</p>
+</li>
+</ul>
+<p>來看一下 handler.js</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">module</span>.exports.handler = <span class="function"><span class="keyword">function</span>(<span class="params">event, context, cb</span>) </span>&#123;</div><div class="line">    <span class="comment">// empty</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>實際上我們運行的 function 就是長下面這個樣子，</p>
+<p>在開始討論其他配置，和 aws 要怎麼運行到這裡之前，</p>
+<p>先搞清楚到底在談論什麼東西：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span>(<span class="params">event, context</span>)</span></div></pre></td></tr></table></figure>
+<blockquote>
+<p>可以有第三個參數 cabllback，</p>
+<p>不過其實只要這兩項就可以運作的很好了，</p>
+<p>而且 callback 實在不是一個好事</p>
+</blockquote>
+<h2 id="Source-event"><a href="#Source-event" class="headerlink" title="Source event"></a>Source event</h2><p>source event，可以是 push 或 pull model。</p>
+<p>假設 S3 上面資料新增，lambda function 會接收到 event 去做事情，</p>
+<p>那這就是一個 push model。</p>
+<p>假設今天是 lamda function 去掃了一遍 DynamoDB ，</p>
+<p>發現有事情要根據上面的資料去做，</p>
+<p>這就是一個 pull model。</p>
+<p>而 source event 也可以很單純的來自 http request。</p>
+<h2 id="Context"><a href="#Context" class="headerlink" title="Context"></a>Context</h2><p><code>context</code> 是一個 object，</p>
+<p>裡面包含了當前 lambda 運行環境的訊息，</p>
+<p>以及一些 method。</p>
+<p>有三個 methods 是一定要知道的：</p>
+<blockquote>
+<p>這裡的參數是可選的，我們可以只讓 function 做事，<br>沒有一定要強制回傳結果。</p>
+</blockquote>
+<ul>
+<li><p><code>context.succeed(Object result)</code></p>
+<ul>
+<li><p>可以在執行成功時回傳東西： <code>context.succeed(someObject)</code></p>
+</li>
+<li><p>注意這裡的 <code>result</code> 必須要能夠被 JSON.stringifyu 轉成字串</p>
+</li>
+</ul>
+</li>
+<li><p><code>context.fail(Error error)</code> </p>
+<ul>
+<li>在失敗時回傳東西</li>
+</ul>
+</li>
+<li><p><code>context.done(Error error, Object result)</code></p>
+<ul>
+<li><p>這個就有點奇葩了，有了成功和失敗為什麼還要存在個 done 呢？</p>
+</li>
+<li><p>如果 error 不為 null，這次的 lamda function 就會被認定為執行失敗</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>再來是可以看到目前執行剩餘時間：</p>
+<p><code>context.getRemainingTimeInMillis()</code></p>
+<p>這裡所謂的看到當然是指在 function 執行時我們能利用啦！</p>
+<p>不過要注意的是如果歸零，</p>
+<p>AWS lambda 就會強制終止我們的 lambda function 了。</p>
+<h2 id="handler-js"><a href="#handler-js" class="headerlink" title="handler.js"></a><code>handler.js</code></h2><p>前面有提到過這裡就是 aws 運行的進入點，</p>
+<p>要在 <code>s-function.json</code> 裡面設定，</p>
+<p>這裡看到我們只在 <code>handler</code> 那個屬性打上 : <code>handler.handler</code>，</p>
+<p>這有兩件事情值得注意：</p>
+<ul>
+<li>對應執行的就是 <code>handler.js</code> 這個 module 底下的 <code>handler</code></li>
+</ul>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// in handler.js</span></div><div class="line"><span class="built_in">module</span>.exports.handler = <span class="function"><span class="keyword">function</span>(<span class="params">event, context</span>) </span>&#123;</div><div class="line">    <span class="comment">// This be implemented</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>第二件事就是這個 hanlder 屬性還隱含著我們目前能作用的 scope，</p>
+<p>假如我們是：<code>function1/handler.handler</code>，</p>
+<p>就把上層的 parent folder 給包含進去，</p>
+<p>所以他就吃得到我們在根目錄安裝的 npm 套件。</p>
+<blockquote>
+<p>比如說你安裝了 react，那你就可以：<br><code>require(&#39;react&#39;)</code></p>
+</blockquote>
+<p>理解到這樣的程度，就已經足夠進行下去了，</p>
+<p>直接來實作吧！</p>
+<h1 id="Implementation-Simple-RESTful-api"><a href="#Implementation-Simple-RESTful-api" class="headerlink" title="Implementation: Simple RESTful api"></a>Implementation: Simple RESTful api</h1><p>直接看文件時，總會有種霧裡看花的感覺，</p>
+<p>不過等到實際開始做之後，你會發現其實概念只要 mapping 過去，</p>
+<p>並沒有想像中的困難。</p>
+<blockquote>
+<p>這個是完成後的 <a href="https://github.com/abalone0204/serverless-demo-with-dynamodb-node" target="_blank" rel="external">github repo</a>，</p>
+<p>如果你中途發現有什麼錯誤的話，可以在上面查看是否有哪裡不一樣。</p>
+</blockquote>
+<h2 id="Why"><a href="#Why" class="headerlink" title="Why"></a>Why</h2><p>底下會包含基本的 CRUD 以及 list，</p>
+<p>大多數的應用程式都不脫這五種操作，</p>
+<p>就算需要更特殊的操作，</p>
+<p>也總是要熟悉這些基礎後才能繼續前進，</p>
+<p>包含著如何儲存資料以及 debug 的概念。</p>
+<p>至於資料夾的結構或是 workflow 的順序，</p>
+<p>你都可以依照個人的喜好去調整，不一定要照我寫的走。</p>
+<h2 id="Log"><a href="#Log" class="headerlink" title="Log"></a>Log</h2><ul>
+<li><p>沒錯，我們先來看看要怎麼找出錯誤，從犯錯中學習，是新手成長最快的方式</p>
+</li>
+<li><p>來修改一下<code>functions/posts/hanlder.js</code></p>
+</li>
+</ul>
+<p><code>context</code> 和 <code>event</code> 是我們在 lambda 中要好好處理的東西沒錯，</p>
+<p>不過這裡先專注在出 bug 時要怎麼解決：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="meta">'use strict'</span></div><div class="line"></div><div class="line"><span class="built_in">console</span>.log(<span class="string">'Loading function'</span>)</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">display</span>(<span class="params">object</span>) </span>&#123;</div><div class="line">    <span class="keyword">return</span> <span class="built_in">JSON</span>.stringify(object, <span class="literal">null</span>, <span class="number">2</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">module</span>.exports.handler = (event, context) =&gt; &#123;</div><div class="line">  <span class="built_in">console</span>.log(<span class="string">'Event: '</span>, display(event))</div><div class="line">  <span class="built_in">console</span>.log(<span class="string">'Context: '</span>, display(context))</div><div class="line">  context.succedd(&#123;</div><div class="line">    message: <span class="string">'ok, it works'</span></div><div class="line">  &#125;)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>這裡的程式碼有個明顯的錯誤，待會我們會除錯並且學習如何看 log</p>
+</blockquote>
+<p>稍做一些更改之後我們就可以再次部署了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">serverless dash deploy</div></pre></td></tr></table></figure>
+<p>再到剛剛的網址，會發現出現錯誤了！</p>
+<p>幸好這裡加上了許多 <code>console.log</code>，</p>
+<p>假如你曾經寫過 JavaScript 對這樣的除錯技巧一定不陌生，</p>
+<p>但，這裡的 log 不會在 console 印出來，會到哪裡呢？</p>
+<p>這裡就要使用 aws 上的另個服務：CloudWatch 了。</p>
+<p>到 services 點 CloudWatch，選取 logs，</p>
+<p>就會看到這裡有個 log groups 就是我們剛剛建立的 functions。</p>
+<p>選進去後會很神奇地發現我們之前 call 的紀錄都在這裡。</p>
+<p>在 log 中我們可以看到：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">...(一些日期和系統資訊) TypeError: context.succedd is not a function at module.exports.handler (/const/task/handler.js:12:11)</div></pre></td></tr></table></figure>
+<p>我們出了一個 typo 的錯誤，改正過來以後就成功啦！</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">context.succeed(&#123;</div><div class="line">    message: <span class="string">'ok, it works'</span></div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<h2 id="Create-an-item"><a href="#Create-an-item" class="headerlink" title="Create an item"></a>Create an item</h2><p>要存資料庫前，必須先在 <code>DynamoDB</code> 建一張 Table。</p>
+<blockquote>
+<p>DynamoDB 是一個 no sql 的資料庫</p>
+<p>為了 scale-out ，它在使用上有一些限制，</p>
+<p>但在這個簡單的示例中，並不會需要考量到這些，</p>
+<p>假如有興趣深入的話，可以看補充資料的地方</p>
+<p><a href="http://history.programmer.com.cn/11081/" target="_blank" rel="external">解析 DynamoDB</a></p>
+</blockquote>
+<ul>
+<li><p>到 aws 上選擇 <code>DynamoDB</code> 。</p>
+</li>
+<li><p>Create table</p>
+</li>
+<li><p>table name 輸入 <code>posts</code></p>
+</li>
+<li><p>primary key 名稱設定為 <code>id</code></p>
+</li>
+<li><p>下面的 default setting 取消勾選，然後將 Read capacity units 以及 Write capacity units 都調成 1</p>
+</li>
+<li><p>我們就有一個很陽春的 table 了</p>
+</li>
+</ul>
+<p>接著是在 <code>handler</code> 裡面的更動，</p>
+<p>首先要安裝兩個 package</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">npm i -S dynamodb-doc node-uuid</div></pre></td></tr></table></figure>
+<p>前面有說過 lambda function 其實就是根據 source event，</p>
+<p>去執行對應的動作：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> DOC = <span class="built_in">require</span>(<span class="string">'dynamodb-doc'</span>)</div><div class="line"><span class="keyword">const</span> dynamo = <span class="keyword">new</span> DOC.DynamoDB()</div><div class="line"></div><div class="line"><span class="built_in">module</span>.exports.handler = (event, context) =&gt; &#123;</div><div class="line">    <span class="built_in">console</span>.log(<span class="string">'Event: '</span>, display(event))</div><div class="line">    <span class="built_in">console</span>.log(<span class="string">'Context: '</span>, display(context))</div><div class="line">    </div><div class="line">    <span class="keyword">const</span> operation = event.operation</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (event.tableName) &#123;</div><div class="line">        event.payload.TableName = event.tableName</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">switch</span> (operation) &#123;</div><div class="line">        <span class="keyword">case</span> <span class="string">'create'</span>:</div><div class="line">            <span class="keyword">const</span> uuid = <span class="built_in">require</span>(<span class="string">'node-uuid'</span>)</div><div class="line">            event.payload.Item.id = uuid.v1()</div><div class="line">            dynamo.putItem(event.payload, () =&gt; &#123;</div><div class="line">                context.succeed(&#123;</div><div class="line">                    <span class="string">"id"</span>: event.payload.Item.id</div><div class="line">                &#125;)</div><div class="line">            &#125;)</div><div class="line">            <span class="keyword">break</span></div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            context.fail(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Unrecognized operation "'</span> + operation + <span class="string">'"'</span>))</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>其實蠻像我們平常在<code>redux</code>中處理對應的 action type 的 <code>reducer</code></p>
+</blockquote>
+<p>這裡建立了一個 <code>DynamoDB</code> 的 client，簡單的來說，我們會把 <code>event.payload</code> 這個 object，</p>
+<p>新增成 Table 裡的一個新 item，並且給它一個唯一的 <code>id</code>，</p>
+<p>畢竟是 Primary key 嘛！ </p>
+<blockquote>
+<p>如果你不熟悉 Database 的基礎理論，Primary key。</p>
+<p>Primary key 就是我們拿來識別這個 item 在這個表中是唯一的「身分證」，</p>
+<p>在這裡我們是用 <code>id</code>來作為我們的 Primary key。</p>
+</blockquote>
+<p>那這個 <code>event</code>又是怎麼來的呢？</p>
+<p>首先我們要了解的是 Create 這個動作對應到的 http method 是 <code>POST</code>，</p>
+<p>所以當我們在對同一個 url 執行 <code>GET</code> 跟 <code>POST</code>時，</p>
+<p>雖然 call 的是同個 function（或者更精確地說，是同一個 Endpoint）。</p>
+<p>在 <code>posts</code> 資料夾底下，可以看到一個 <code>s-function.json</code>，</p>
+<p>這個檔案中放著的是關於我們在進入 <code>handler.js</code>時相關的 config。</p>
+<p>當然也包括了前面說到的 <code>event</code>。</p>
+<p>先直接看到 <code>endpoints</code> 這個 attribute，裡面有許多個物件，</p>
+<p>預設的是這個：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">      <span class="string">"path"</span>: <span class="string">"posts"</span>,</div><div class="line">      <span class="string">"method"</span>: <span class="string">"GET"</span>,</div><div class="line">      <span class="string">"type"</span>: <span class="string">"AWS"</span>,</div><div class="line">      <span class="string">"authorizationType"</span>: <span class="string">"none"</span>,</div><div class="line">      <span class="string">"authorizerFunction"</span>: <span class="literal">false</span>,</div><div class="line">      <span class="string">"apiKeyRequired"</span>: <span class="literal">false</span>,</div><div class="line">      <span class="string">"requestParameters"</span>: &#123;&#125;,</div><div class="line">      <span class="string">"requestTemplates"</span>: &#123;</div><div class="line">        <span class="string">"application/json"</span>: <span class="string">""</span></div><div class="line">      &#125;,</div><div class="line">      <span class="string">"responses"</span>: &#123;</div><div class="line">        <span class="string">"400"</span>: &#123;</div><div class="line">          <span class="string">"statusCode"</span>: <span class="string">"400"</span></div><div class="line">        &#125;,</div><div class="line">        <span class="string">"default"</span>: &#123;</div><div class="line">          <span class="string">"statusCode"</span>: <span class="string">"200"</span>,</div><div class="line">          <span class="string">"responseParameters"</span>: &#123;&#125;,</div><div class="line">          <span class="string">"responseModels"</span>: &#123;</div><div class="line">            <span class="string">"application/jsoncharset=UTF-8"</span>: <span class="string">"Empty"</span></div><div class="line">          &#125;,</div><div class="line">          <span class="string">"responseTemplates"</span>: &#123;</div><div class="line">            <span class="string">"application/jsoncharset=UTF-8"</span>: <span class="string">""</span></div><div class="line">          &#125;</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這裡有好多東西，</p>
+<p>假如我們要在裡面定義我們對每個 endpoint 的長相，誰不發瘋呢？</p>
+<p>眼尖的你應該看到了有 <code>template</code>這個字眼，</p>
+<p>而剛剛送進來的 <code>event</code> 正是一個 http request，</p>
+<p>所以我們要做的事情已經呼之欲出了，就是在<code>requestTemplates</code>加上我們指定的 template 名稱，</p>
+<p>就能根據這個 template 生出我們想要的 event 。</p>
+<p>在 <code>endpoints</code> 中加上了這個新的 object：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">      <span class="string">"path"</span>: <span class="string">"posts"</span>,</div><div class="line">      <span class="string">"method"</span>: <span class="string">"POST"</span>,</div><div class="line">      <span class="string">"type"</span>: <span class="string">"AWS"</span>,</div><div class="line">      <span class="string">"authorizationType"</span>: <span class="string">"none"</span>,</div><div class="line">      <span class="string">"authorizerFunction"</span>: <span class="literal">false</span>,</div><div class="line">      <span class="string">"apiKeyRequired"</span>: <span class="literal">false</span>,</div><div class="line">      <span class="string">"requestParameters"</span>: &#123;&#125;,</div><div class="line">      <span class="string">"requestTemplates"</span>: <span class="string">"$$&#123;requestCreatePostTemplate&#125;"</span>,</div><div class="line">      <span class="string">"responses"</span>: &#123;</div><div class="line">        <span class="string">"400"</span>: &#123;</div><div class="line">          <span class="string">"statusCode"</span>: <span class="string">"400"</span></div><div class="line">        &#125;,</div><div class="line">        <span class="string">"default"</span>: &#123;</div><div class="line">          <span class="string">"statusCode"</span>: <span class="string">"200"</span>,</div><div class="line">          <span class="string">"responseParameters"</span>: &#123;&#125;,</div><div class="line">          <span class="string">"responseModels"</span>: &#123;</div><div class="line">            <span class="string">"application/jsoncharset=UTF-8"</span>: <span class="string">"Empty"</span></div><div class="line">          &#125;,</div><div class="line">          <span class="string">"responseTemplates"</span>: &#123;</div><div class="line">            <span class="string">"application/jsoncharset=UTF-8"</span>: <span class="string">""</span></div><div class="line">          &#125;</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>當進入這個 api 時(path 沒有改變)，使用 POST method時，</p>
+<p>我們的 request 會照著<code>requestCreatePostTemplate</code>這個 template 走</p>
+<blockquote>
+<p>$${requestCreatePostTemplate} 是特殊的語法，</p>
+<p>讓 serverless 知道這是個 template 名字，而不是一般的 string。</p>
+</blockquote>
+<p>所以我說，那個 tempalte 呢？</p>
+<p>這裡要在 <code>posts</code> 底下新增 <code>s-templates.json</code>，</p>
+<p>所有的關於 lambda function 的 template 都會放在這裡。</p>
+<p>接下來我們就可以設計我們的 request（event）的長相了：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="string">"requestCreatePostTemplate"</span>: &#123;</div><div class="line">        <span class="string">"application/json"</span>: &#123;</div><div class="line">            <span class="string">"operation"</span>: <span class="string">"create"</span>,</div><div class="line">            <span class="string">"tableName"</span>: <span class="string">"posts"</span>,</div><div class="line">            <span class="string">"payload"</span>: &#123;</div><div class="line">                <span class="string">"Item"</span>: &#123;</div><div class="line">                    <span class="string">"content"</span>: <span class="string">"$input.json('$')"</span></div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這裡比較讓人疑惑的是 <code>$input.json(&#39;$&#39;)</code>是什麼，</p>
+<p>這其實是跟 API Gateway 比較有關係的 template 語法，</p>
+<p>而不是 serverless 這個框架底下的。</p>
+<blockquote>
+<p>This function evaluates a JSONPath expression and returns the results as a JSON string.<br>For example, $input.json(‘$.pets’) will return a JSON string representing the pets structure.</p>
+</blockquote>
+<p>簡單的說，他會將 input 轉成一個 json-like string，</p>
+<p>更棒的地方是他可以像我們平常 access 底下的 attribut 那樣去找底下的東西：</p>
+<p>（就是所謂的 <a href="http://goessner.net/articles/JsonPath/" target="_blank" rel="external">json path</a>）</p>
+<p>像是 <code>$.pets</code> 就是將我們吃到的 input object底下<code>pets</code> 對應到的東西，</p>
+<p>轉成 string。</p>
+<blockquote>
+<p><a href="http://docs.aws.amazon.com/zh_cn/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html" target="_blank" rel="external">Amazon API Gateway: Mapping template reference</a></p>
+<p>想瞭解更多關於 Template 的話可以參考 serverless framework 的文件：</p>
+<p><a href="http://docs.serverless.com/docs/application-architectures" target="_blank" rel="external">Template &amp; Variable</a></p>
+</blockquote>
+<p>接著回到一開始的 <code>handler.js</code>，</p>
+<p>就可以把跟 <code>event</code> 有關的東西與我們前面 template 裡面所做的 config 連接起來了：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">module</span>.exports.handler = (event, context) =&gt; &#123;</div><div class="line">    <span class="built_in">console</span>.log(<span class="string">'Event: '</span>, display(event))</div><div class="line">    <span class="built_in">console</span>.log(<span class="string">'Context: '</span>, display(context))</div><div class="line">    <span class="keyword">const</span> operation = event.operation</div><div class="line">    <span class="keyword">if</span> (event.tableName) &#123;</div><div class="line">        event.payload.TableName = event.tableName</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">switch</span> (operation) &#123;</div><div class="line">        <span class="keyword">case</span> <span class="string">'create'</span>:</div><div class="line">            <span class="keyword">const</span> uuid = <span class="built_in">require</span>(<span class="string">'node-uuid'</span>)</div><div class="line">            event.payload.Item.id = uuid.v1()</div><div class="line">            <span class="built_in">console</span>.log(<span class="string">'Payload: '</span>, display(event.payload))</div><div class="line">            dynamo.putItem(event.payload, () =&gt; &#123;</div><div class="line">                context.succeed(event.payload.Item)</div><div class="line">            &#125;)</div><div class="line">            <span class="keyword">break</span></div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            context.fail(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Unrecognized operation "'</span> + operation + <span class="string">'"'</span>))</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這時候可以部署了！</p>
+<p>部署完成之後我們需要試試有沒有成功，必須要打開 API Gateway，</p>
+<p>一進去就可以看到對應 project 名稱的 api，</p>
+<p>點進去能看到我們現在有哪幾個 api 可以用（url）。</p>
+<p>可以把 API Gateway 想像成我們平常使用的 <code>router</code>，</p>
+<p>Gateway 會把要執行的 endpoint 接到對應的 url 上。</p>
+<p>點擊 <code>/posts</code> 底下 <code>POST</code> method 的 integration request ，</p>
+<p>在 Body Mapping Templates 可以看到對應的 template：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123;<span class="string">"operation"</span>:<span class="string">"create"</span>,<span class="string">"tableName"</span>:<span class="string">"posts"</span>,<span class="string">"payload"</span>:&#123;<span class="string">"Item"</span>:&#123;<span class="string">"content"</span>:$input.json(<span class="string">'$'</span>)&#125;&#125;&#125;</div></pre></td></tr></table></figure>
+<p>那，要怎麼測試呢？</p>
+<p>我習慣用 postman，算是一個測 api 相當好用的工具，</p>
+<p>找到<code>serverless-demo</code>這 project 底下對應的 <code>stages</code> ，</p>
+<p>選擇當前對應的 stage（預設應該是 dev），</p>
+<p>然後選擇<code>Export as Swagger + Postman Extensions</code> 這個選項，</p>
+<p>會下載一個 json ，裡面把你所有建立的 request 都包好好的。</p>
+<p>接著就能在 postman 中 import ，就能直接使用了。</p>
+<p>首先當然是先測試原先的 <code>GET</code> method，理論上來說應該要丟出 error，</p>
+<p>因為送進來的 request(event)，它的 <code>operation</code>是 <code>undefined</code>：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  <span class="string">"errorMessage"</span>: <span class="string">"Unrecognized operation \"undefined\""</span>,</div><div class="line">  <span class="string">"errorType"</span>: <span class="string">"Error"</span>,</div><div class="line">  <span class="string">"stackTrace"</span>: [</div><div class="line">    <span class="string">"module.exports.handler (/const/task/handler.js:28:26)"</span></div><div class="line">  ]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>非常的好。</p>
+<p>接著是<code>POST</code>：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  <span class="string">"errorMessage"</span>: <span class="string">"Process exited before completing request"</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>居然噴錯了，所以我們要再度到 CloudWatch 去看一下 log，</p>
+<p>看起來 <code>event</code> 的樣子是對的，但往下一看就找到了這個錯誤：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Cannot find module &apos;node-uuid&apos;</div></pre></td></tr></table></figure>
+<p>我們在根目錄雖然有<code>package.json</code>，</p>
+<p>但是目前對於底下的 <code>handler.js</code> 而言，</p>
+<p>它對根目錄是完全一無所知的，那該怎麼做呢？</p>
+<p>在<code>s-function.json</code> 中的 <code>handler</code> 改成 <code>functions/posts/handler.handler</code>，</p>
+<p>我們能在這裡決定 function 要對整個 project 的權限到哪裡，</p>
+<p>像這裡就會一直延伸到根目錄，所以我們在根目錄所安裝的 package，</p>
+<p>自然到了<code>posts</code>底下也吃得到了。</p>
+<p>假如仍然沒有辦法動到 dynamodb 的話，</p>
+<p>就要到 <code>s-resources-cf.json</code> 更改設定</p>
+<p>在<code>IamPolicyLambda.Properties.PolicyDocument.Statement</code>底下加上：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&#123; </div><div class="line">    <span class="string">"Effect"</span>: <span class="string">"Allow"</span>,</div><div class="line">    <span class="string">"Action"</span>: [<span class="string">"*"</span>],</div><div class="line">    <span class="string">"Resource"</span>: <span class="string">"arn:aws:dynamodb:$&#123;region&#125;:*:table/*"</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再去 Postman 執行一次，</p>
+<p>DynamoDB 的 Table 裡面就會出現新一筆的資料了（一個新的 Item）。</p>
+<h2 id="Read-an-item"><a href="#Read-an-item" class="headerlink" title="Read an item"></a>Read an item</h2><ul>
+<li>我們剛剛已經可以在 DynamoDB 裡面新增資料，自然要有辦法拿出來才是。</li>
+</ul>
+<p>第一步一樣是從 <code>handler.js</code> 裡面直接去做更改：</p>
+<blockquote>
+<p>為什麼每次都從 <code>handler.js</code>開始是因為這邊是最符合邏輯的地方，</p>
+<p>其他都比較特定的 config 問題</p>
+</blockquote>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">switch</span> (operation) &#123;</div><div class="line">    <span class="keyword">case</span> <span class="string">'create'</span>:</div><div class="line">        <span class="keyword">const</span> uuid = <span class="built_in">require</span>(<span class="string">'node-uuid'</span>)</div><div class="line">        event.payload.Item.id = uuid.v1()</div><div class="line">        <span class="built_in">console</span>.log(<span class="string">'Payload: '</span>, display(event.payload))</div><div class="line">        dynamo.putItem(event.payload, () =&gt; &#123;</div><div class="line">            context.succeed(event.payload.Item)</div><div class="line">        &#125;)</div><div class="line">        <span class="keyword">break</span></div><div class="line">    <span class="keyword">case</span> <span class="string">'read'</span>:</div><div class="line">        dynamo.getItem(event.payload, context.done)</div><div class="line">        <span class="keyword">break</span></div><div class="line">    <span class="keyword">default</span>:</div><div class="line">        context.fail(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Unrecognized operation "'</span> + operation + <span class="string">'"'</span>))</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接著要到 <code>s-function.json</code> 裡面去加上對於 parameter 的設定，</p>
+<p>以及加上 template：</p>
+<blockquote>
+<p>在 GET method 的底下</p>
+</blockquote>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="string">"requestParameters"</span>: &#123;</div><div class="line">        <span class="string">"integration.request.querystring.id"</span>: <span class="string">"method.request.querystring.id"</span></div><div class="line">      &#125;,</div><div class="line"><span class="string">"requestTemplates"</span>: <span class="string">"$$&#123;requestReadPostTemplate&#125;"</span></div></pre></td></tr></table></figure>
+<p>最後則是 template：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="string">"requestReadPostTemplate"</span>: &#123;</div><div class="line">    <span class="string">"application/json"</span>: &#123;</div><div class="line">        <span class="string">"operation"</span>: <span class="string">"read"</span>,</div><div class="line">        <span class="string">"tableName"</span>: <span class="string">"posts"</span>,</div><div class="line">        <span class="string">"payload"</span>: &#123;</div><div class="line">            <span class="string">"Key"</span>: &#123;</div><div class="line">                <span class="string">"id"</span>: <span class="string">"$input.params('id')"</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>假如你好奇為什麼要用<code>Key</code> 的話，</p>
+<p>可以參考 DynamoDB js sdk 的 <a href="https://github.com/awslabs/dynamodb-document-js-sdk" target="_blank" rel="external">github</a></p>
+<p>與 mongodb 的 query 非常相似</p>
+</blockquote>
+<p>因為我們在 handler 中用了 <code>context.done</code>，</p>
+<p>這裡其實是個 callback function，等到 <code>getItem</code> 結束後，</p>
+<p>才會執行 <code>context.done</code> ，</p>
+<p>並且會依序傳入 <code>error</code>、<code>data</code>兩個 object，</p>
+<p>所以回傳的 response 會是像這樣的一整個 item：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  <span class="string">"Item"</span>: &#123;</div><div class="line">    <span class="string">"id"</span>: <span class="string">"3caaeb80-1ebf-11e6-81a9-21cf9c171332"</span>,</div><div class="line">    <span class="string">"content"</span>: &#123;</div><div class="line">      <span class="string">"message"</span>: <span class="string">"Hello world again!"</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>有時候我們並不想讓使用者知道這麼多，</p>
+<p>所以可以使用 response template，</p>
+<p>這裡就能看到前面說的 json path 的用處：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// s-function.json</span></div><div class="line"><span class="string">"responseTemplates"</span>: <span class="string">"$$&#123;responseReadPostTemplate&#125;"</span></div></pre></td></tr></table></figure>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// s-templates.json</span></div><div class="line"><span class="string">"responseReadPostTemplate"</span>: &#123;</div><div class="line">    <span class="string">"application/json"</span>: &#123;</div><div class="line">        <span class="string">"post"</span>: &#123;</div><div class="line">            <span class="string">"id"</span>: <span class="string">"$input.path('$').Item.id"</span>,</div><div class="line">            <span class="string">"content"</span>: &#123;</div><div class="line">                <span class="string">"message"</span>: <span class="string">"$input.path('$').Item.content.message"</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="Update-an-item"><a href="#Update-an-item" class="headerlink" title="Update an item"></a>Update an item</h2><p>Update 跟 Read 的做法其實已經大同小異，</p>
+<p>一樣是把查詢用的 Key 放在 <code>params</code> 中，</p>
+<p>這裡我們一樣把整包 payload 都丟進來。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">dynamo.putItem(event.payload, (err, data)=&gt; &#123;</div><div class="line">    context.succeed(event.payload)</div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<p>看起來只是改成使用 <code>putItem</code> 而已，</p>
+<p>但其實這邊的 template 有點小小的改變。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="string">"requestUpdatePostTemplate"</span>: &#123;</div><div class="line">    <span class="string">"application/json"</span>: &#123;</div><div class="line">        <span class="string">"operation"</span>: <span class="string">"update"</span>,</div><div class="line">        <span class="string">"tableName"</span>: <span class="string">"posts"</span>,</div><div class="line">        <span class="string">"payload"</span>: &#123;</div><div class="line">            <span class="string">"Item"</span>: &#123;</div><div class="line">                <span class="string">"id"</span>: <span class="string">"$input.params('id')"</span>,</div><div class="line">                <span class="string">"content"</span>: <span class="string">"$input.json('$')"</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這樣子的好處就是在更新時，只要在 params 輸入指定的 <code>id</code>，</p>
+<p>其餘要更新的部分就是放在 <code>body</code>裡面。</p>
+<blockquote>
+<p>這裡的 <code>PUT</code> 並不是 partial 的更新，</p>
+<p>而是整個會替換掉，符合它原本 HTTP method 對應的行為</p>
+</blockquote>
+<p>至於<code>s-function.json</code> 裡面要怎麼改，這有點太 trivial ，</p>
+<p>就不放上來了。</p>
+<h2 id="Delete-an-item"><a href="#Delete-an-item" class="headerlink" title="Delete an item"></a>Delete an item</h2><p>刪除一個 item，要做的事情比 update 單純多了，</p>
+<p>基本上只要指定好 Key，一切就已經結束了：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">dynamo.deleteItem(event.payload, context.done)</div></pre></td></tr></table></figure>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="string">"requestDestroyPostTemplate"</span>: &#123;</div><div class="line">    <span class="string">"application/json"</span>: &#123;</div><div class="line">        <span class="string">"operation"</span>: <span class="string">"destroy"</span>,</div><div class="line">        <span class="string">"tableName"</span>: <span class="string">"posts"</span>,</div><div class="line">        <span class="string">"payload"</span>: &#123;</div><div class="line">            <span class="string">"Key"</span>: &#123;</div><div class="line">                <span class="string">"id"</span>: <span class="string">"$input.params('id')"</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="List-items"><a href="#List-items" class="headerlink" title="List items"></a>List items</h2><p>除了以上的 CRUD 之外，</p>
+<p>列出一定數量的 items 也是一個相當常見的需求。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">dynamo.scan(event.payload, context.done)</div></pre></td></tr></table></figure>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="string">"requestListPostTemplate"</span>: &#123;</div><div class="line">    <span class="string">"application/json"</span>: &#123;</div><div class="line">        <span class="string">"operation"</span>: <span class="string">"list"</span>,</div><div class="line">        <span class="string">"tableName"</span>: <span class="string">"posts"</span>,</div><div class="line">        <span class="string">"payload"</span>: &#123;&#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最後的 Response template 會用到 <code>foreach</code> 語法，</p>
+<p>坦白說這裡我壓根不想去理解這裡的意義是什麼，</p>
+<p>我寧願在需要的時候再去查文件就好，</p>
+<p>因為我相信這種夭壽的語法遲早會被改掉的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;responseListPostTemplate&quot;: &quot;&#123;\&quot;posts\&quot; : [#foreach($post in $input.path(&apos;$&apos;).Items)&#123;\&quot;id\&quot; : \&quot;$post.id\&quot;,\&quot;content\&quot; : &#123; \&quot;message\&quot;:\&quot;$post.content.message\&quot; &#125;&#125;#if($foreach.hasNext),#end #end ] &#125;&quot;</div></pre></td></tr></table></figure>
+<h1 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h1><p>現在大概知道，</p>
+<p>為什麼當初開始學的時候網路上沒什麼好的教學文了，</p>
+<p>因為 config 的設置真的是挺複雜的，</p>
+<p>不過我想這一篇這樣記錄下來，應該能讓許多人省下走冤枉路的時間。</p>
+<p>對於一個程式開發者來說，學習東西的時間就是最大的成本，</p>
+<p>我想 serverless 不管對於前後端來說，</p>
+<p>都是一項很超值的投資。</p>
+<p>因為大部分時候，我們都不需要開一整台機器來完成你想做的事情。</p>
+<p>在完成這篇之後，可以做什麼練習呢？</p>
+<p>你可以試著把你原本在 EC2 上 host 的服務，</p>
+<p>轉移成 serverless 架構。</p>
+<blockquote>
+<p>光想就覺得超難的</p>
+</blockquote>
+<p>或者是把一些 routine 的工作，用 serverless 的方式去做，</p>
+<p>當你越過前面那些雞巴毛 config 後，</p>
+<p>你會發現開發和部署上帶來的效率令你吃驚。</p>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><ul>
+<li><p><a href="https://github.com/markusklems/serverless-node-dynamodb-example" target="_blank" rel="external">Serverless node dynamodb example</a></p>
+</li>
+<li><p><a href="http://docs.serverless.com/docs/" target="_blank" rel="external">serverless framework document</a></p>
+</li>
+<li><p><a href="http://history.programmer.com.cn/11081/" target="_blank" rel="external">解析 DynamoDB</a></p>
+</li>
+<li><p><a href="http://docs.aws.amazon.com/zh_cn/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html" target="_blank" rel="external">Amazon API Gateway: Mapping template reference</a></p>
+</li>
+<li><p><a href="http://alexfalkowski.blogspot.tw/2013/12/micro-and-nano-services.html" target="_blank" rel="external">Micro service and Nano service</a></p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/05/29/sls-fb-bot/" class="prev">PREV</a><a href="/2016/05/14/redux-saga/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/05/22/serverless-simple-crud/';
+var disqus_title = '淺析 serverless 架構與實作';
+var disqus_url = 'http://abalone0204.github.com/2016/05/22/serverless-simple-crud/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

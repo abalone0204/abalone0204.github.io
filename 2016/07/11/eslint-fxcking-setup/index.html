@@ -1,0 +1,419 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 淺入淺出 eslint 與實作 · De-bug: 一鍵跑版</title><meta name="description" content="淺入淺出 eslint 與實作 - Tsung-Chen Ku"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">淺入淺出 eslint 與實作</h1><div class="post-time">Jul 11, 2016</div><div class="post-content"><p>相信團隊為了提升程式碼的品質，</p>
+<p>第一步通常會是制定 style guide，</p>
+<p>但 style guide 越定越複雜後，要靠人工去檢查就顯得有點不切實際。</p>
+<p>這時候就需要靠程式自動來做語法上的檢查及 highlight，</p>
+<blockquote>
+<p>更殘酷一點可以讓不符合 coding style 的 code 無法被 commit</p>
+</blockquote>
+<p>這就是 linter 的功用。</p>
+<p>而這篇會以我最近在實務上以 eslint + webpack + githook 來做舉例。</p>
+<p>我知道網路上有許多充滿獨到經驗的 javascript linter，最有名應該就是 airbnb 的），</p>
+<p>直接拿來用當然也 ok，不過，我們固然要學工具，</p>
+<p>工具背後的想法才是我們更該了解的。</p>
+<p>這一篇並不是什麼懶人教學，複製貼上就能用的 eslint extends，</p>
+<p>而是一步一步地去理解 eslint 到底能做到什麼事情，</p>
+<p>也許你看完以後還是會選擇直接使用 airbnb 或是其他人寫好的 linter，</p>
+<p>但這時候的你，</p>
+<p>已經完全有能力參考前人經驗並制定出一套符合你們團隊需求的 linter，</p>
+<p>甚至去看他們的設定時，能夠對他們為什麼這樣做更有想法。</p>
+<p>希望你看完之後，學會的並不是 eslint 這個工具而已，</p>
+<p>而是未來你要做類似東西時內心已經有一個架構在。</p>
+<p>雖然站在巨人肩膀上能夠看的更遠，</p>
+<p>但能夠自己造出一個鋼彈再站上去，那他媽完全是不一樣帥氣的事情。</p>
+<a id="more"></a>
+<h1 id="Catalogue"><a href="#Catalogue" class="headerlink" title="Catalogue"></a>Catalogue</h1><ul>
+<li><p><a href="#為什麼之前不用-linter？">為什麼之前不用 linter？</a></p>
+</li>
+<li><p><a href="#Intro-amp-Philosophy">Intro &amp; Philosophy</a></p>
+</li>
+<li><p><a href="#Configuration-of-ESLint">Configuration of ESLint</a></p>
+<ul>
+<li><p><a href="#What-can-I-configure">What can I configure?</a></p>
+</li>
+<li><p><a href="#Parser-Options-amp-Parser">Parser Options &amp; Parser</a></p>
+</li>
+<li><p><a href="#Environments">Environments</a></p>
+</li>
+<li><p><a href="#Globals">Globals</a></p>
+</li>
+<li><p><a href="#Plugins">Plugins</a></p>
+</li>
+<li><p><a href="#Rules">Rules</a></p>
+</li>
+<li><p><a href="#Extends">Extends</a></p>
+</li>
+<li><p><a href="#Others">Others</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#Practical-Usage">Practical Usage</a></p>
+<ul>
+<li><p><a href="#Integration-with-webpack">Integration with webpack</a></p>
+</li>
+<li><p><a href="#Integration-with-git-hooks">Integration with git hooks</a></p>
+</li>
+<li><p><a href="#Other-solution">Other solution</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#Conclusion">Conclusion</a></p>
+</li>
+</ul>
+<hr>
+<h1 id="為什麼之前不用-linter？"><a href="#為什麼之前不用-linter？" class="headerlink" title="為什麼之前不用 linter？"></a>為什麼之前不用 linter？</h1><p>我得承認在寫這篇文章前，</p>
+<p>我並沒有使用 linter 的習慣，</p>
+<p>因為說真的，在專案長到一定大小前，</p>
+<p>linter 更像是 nice to have 而不是 must have 的東西，</p>
+<p>儘管我們知道越早用它越好⋯⋯</p>
+<p>大家可能在國文課本都看過方孝儒的指喻，</p>
+<p>其實髒髒的 code 這件事就像指喻一樣「始以為不足治，而終至於不可為。」。</p>
+<p><img src="http://i.imgur.com/yTf6igd.jpg" alt="finter"></p>
+<p>之前不去使用 <code>eslint</code> 的藉口都是沒空仔細研究，</p>
+<p>的確，現實生活中的時程可能不允許你直接花大把時間在 linter 上，</p>
+<p>所以這篇文章是從幾個禮拜的零碎時間中擠出來的。</p>
+<h1 id="Intro-amp-Philosophy"><a href="#Intro-amp-Philosophy" class="headerlink" title="Intro &amp; Philosophy"></a>Intro &amp; Philosophy</h1><p>首先要理解的是：linter 做的事情其實是「靜態的語法分析」。</p>
+<p>這意味著我們不需要去執行 script，就能標記出不符合 coding styles 的地方。</p>
+<p>另外，</p>
+<p><code>eslint</code>的所有規則(rule)都是 <code>pluggable</code> 的，</p>
+<p>沒有什麼東西是「太重要」而不能把它關掉，</p>
+<p>包括你去下載別人的 eslint 設定，</p>
+<p>你也可以把不適合你團隊的 rule 給關掉。</p>
+<p>最後，</p>
+<p><code>eslint</code> 的 rules 是 “agenda free”，</p>
+<p>官方並沒有提倡哪種 coding style 是好的，</p>
+<p>你想怎麼樣組合你的 rules 就怎麼樣做。</p>
+<h1 id="Configuration-of-ESLint"><a href="#Configuration-of-ESLint" class="headerlink" title="Configuration of ESLint"></a>Configuration of ESLint</h1><h2 id="What-can-I-configure"><a href="#What-can-I-configure" class="headerlink" title="What can I configure?"></a>What can I configure?</h2><p>官方文件中有介紹許多種 config 的方式，</p>
+<p>可以從 command line、package.json 裡面設定，</p>
+<p>但其實最常看到的還是從 <code>.eslintrc</code>去設定，</p>
+<p>所以這篇也會以 <code>.eslintrc</code>，並且以 json 格式為主。</p>
+<p>在寫 config 之前，你要先了解你可以對什麼東西設定 config，</p>
+<p>其實只有 3 + 1 個東西而已：</p>
+<ul>
+<li><p><strong>Environments</strong></p>
+<ul>
+<li>設定環境，不同的環境中會有不同的全域變數（global variable），eslint 中有提供各種不一樣的 enviroments，很少需要自己寫一個。</li>
+</ul>
+</li>
+<li><p><strong>Globals</strong> </p>
+<ul>
+<li><p>前面有提到過，linter 做的是「靜態」的語法分析，所以它對你程式的運行環境是一無所知的，你必須自己把一些全域變數給加上去。</p>
+</li>
+<li><p>e.q: 開發 chrome extension 時，你要 call chrome 的 API 必須從 <code>chrome</code> 這個 global variable。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>Rules</strong></p>
+<ul>
+<li>規則 XD 就是你 style guide 的規定，除了指定哪些規範要遵守之外，你也可以去決定違反的 error level。</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>有點像是違反這條規則的嚴重程度，</p>
+<p>有些比較輕微的你可以設定噴 warning 嚇嚇他就好，</p>
+<p>但有一些你覺得寫出這些 code 來真是天理難容，你可以直接拿 error 噴死他。</p>
+</blockquote>
+<ul>
+<li><p><strong>Parser</strong></p>
+<ul>
+<li><p>這裡我把它放在多出來的 1，因為我們通常指定完 parser 之後就不會再其上面更改太多設定，甚至根本不需要指定 XD</p>
+</li>
+<li><p>的確，你有可能這輩子都不會寫 parser，但我相信探究技術的本質是一個技術人該有的初心，軟體工程師對於知識不該有太浮躁的心 ：）</p>
+</li>
+<li><p>總之知其然而知其所以然是相當重要的，不管你有沒有修過編譯器（compiler），接下來會馬上科普地介紹 parser 是什麼，以及我們知道這些之後可以做什麼</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="Parser-Options-amp-Parser"><a href="#Parser-Options-amp-Parser" class="headerlink" title="Parser Options &amp; Parser"></a>Parser Options &amp; Parser</h2><p>這一小節會解釋如果你要啟用 jsx, es6 或 es7 語法你該做些什麼。</p>
+<p>但要先解釋一下 Parser 是什麼？</p>
+<blockquote>
+<p>如果你已經知道 Parser 在做什麼，</p>
+<p>可以直接跳過分隔線中間的這一小段科普文</p>
+</blockquote>
+<hr>
+<p>我們都知道電腦看不懂我們寫的 code：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> a = <span class="number">1</span> + <span class="number">2</span></div></pre></td></tr></table></figure>
+<p>Parser 會把我們的程式碼 parse 成 AST(Abstract Syntax Tree)，</p>
+<p>讓我們的程式碼能夠簡單的去操作這個 tree，</p>
+<p>最後才會編譯成 binary 的形式。</p>
+<p>延續上面的例子，</p>
+<p>這段程式碼經過 Espree 這個 parser，「最終」可能會變成：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    type: <span class="string">'VariableDeclarator'</span>,</div><div class="line">    id: &#123;</div><div class="line">        type: <span class="string">'Identifier'</span>,</div><div class="line">        name: <span class="string">'a'</span></div><div class="line">    &#125;,</div><div class="line">    init: &#123;</div><div class="line">        type: <span class="string">'BinaryExpression'</span>,</div><div class="line">        left: &#123;</div><div class="line">            type: <span class="string">'Literal'</span>,</div><div class="line">            value: <span class="number">1</span>,</div><div class="line">        &#125;,</div><div class="line">        operator: <span class="string">'+'</span>,</div><div class="line">        right: &#123;</div><div class="line">            type: <span class="string">'Literal'</span>,</div><div class="line">            value: <span class="number">2</span>,</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>為了簡單一點，我把它在檔案的位置標記給移掉了，</p>
+</blockquote>
+<p>但整體而言你可以感受一下，比起直接操作純文字，</p>
+<p>轉成 AST 後能用更結構化的方式來取用程式碼。</p>
+<p>科普就到此為止了，</p>
+<p>想對 Parser 有更深入了解，可以參考一下我之前寫的筆記：</p>
+<ul>
+<li><a href="http://abalone0204.github.io/2016/04/25/Super-tiny-compiler/" target="_blank" rel="external">Super tiny compiler</a></li>
+</ul>
+<p>下面參考文章部分也有放一些我當初學習時讀的文章。</p>
+<p>一言以蔽之， </p>
+<p><strong> Parser 就是將我們對語法的理解給「程式化」成一個樹狀的結構。</strong></p>
+<hr>
+<p>前面有說過， Parser 會將純文本的 code 轉成 AST，</p>
+<p><code>eslint</code> 中的 parser 只有預設支援 es5 語法，</p>
+<p>所以其他額外的語法：es6, es7, jsx，都必須要另外設定。</p>
+<blockquote>
+<p>Note: </p>
+<p><strong>支援 jsx 的 parser 不代表支援 React 的語法。</strong></p>
+<p>如果你想要直接使用 React 語法的話可以安裝 <code>eslint-plugin-react</code></p>
+</blockquote>
+<p>接著就直接來看要怎樣設置 Parser 的 options，</p>
+<p>在 <code>.eslintrc.json</code>中的 <code>parserOptions</code>去設置：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  <span class="attr">"parserOptions"</span>: &#123;</div><div class="line">    <span class="attr">"ecmaVersion"</span>: <span class="number">6</span>,</div><div class="line">    <span class="attr">"sourceType"</span>: <span class="string">"module"</span>,</div><div class="line">    <span class="attr">"ecmaFeatures"</span>: &#123;</div><div class="line">      <span class="attr">"jsx"</span>: <span class="literal">true</span>,</div><div class="line">      <span class="attr">"impliedStrict"</span>: <span class="literal">true</span></div><div class="line">    &#125;</div><div class="line">  &#125;,</div><div class="line">  <span class="attr">"rules"</span>: &#123;</div><div class="line">    <span class="attr">"semi"</span>: <span class="number">2</span></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li><p><code>ecmaVersion</code>: 顧名思義就是 ECMA script 的 version，有 3, 5, 6, 7 可以供你挑選</p>
+</li>
+<li><p><code>ecmaFeatures</code></p>
+<ul>
+<li><p>啟用 jsx、strict mode 等 feature，預設都是關閉，可以用 boolean 的方式來開啟。</p>
+</li>
+<li><p>詳情可以到<a href="http://eslint.org/docs/user-guide/configuring" target="_blank" rel="external">官網文件</a>看</p>
+</li>
+</ul>
+</li>
+<li><p><code>sourceType</code>: </p>
+<ul>
+<li><p>預設是 script，但如果你的 code 是被包在 ECMA script 的 module 中，就要設成 module</p>
+</li>
+<li><p>白話文：你用 webpack 的話就把它設成 module </p>
+</li>
+</ul>
+</li>
+</ul>
+<p>最後，雖然 eslint 預設的 parser 是 <code>Espree</code>，但你還是可以換成其他的 parser：</p>
+<ul>
+<li>Esprima, Babel-ESLint</li>
+</ul>
+<blockquote>
+<p>parserOptions 是共通的，在以上的 parser 裡面不用擔心要寫不一樣的 parserOptions</p>
+</blockquote>
+<h2 id="Environments"><a href="#Environments" class="headerlink" title="Environments"></a>Environments</h2><p>可以在不同 environment 去 predefine 所需的 global variables。</p>
+<blockquote>
+<p>注意：</p>
+<p>這裡並不是去 assign global variables，</p>
+<p>而是把不同 environments 的選項給打開，</p>
+<p>接著你就會取到在這個 env 底下 predefine 的 global variables 了</p>
+</blockquote>
+<p>一樣用 <code>.eslintrc</code>舉例：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"env"</span>: &#123;</div><div class="line">        <span class="attr">"browser"</span>: <span class="literal">true</span>,</div><div class="line">        <span class="attr">"node"</span>: <span class="literal">true</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以到官方文件看有哪些 environments 可以用：</p>
+<ul>
+<li><a href="http://eslint.org/docs/user-guide/configuring#specifying-environments" target="_blank" rel="external">官方文件</a></li>
+</ul>
+<p>假如你想要自訂或是用別人 plugin 中的 env 也很簡單：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"plugins"</span>: [<span class="string">"example"</span>],</div><div class="line">    <span class="attr">"env"</span>: &#123;</div><div class="line">        <span class="attr">"example/custom"</span>: <span class="literal">true</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="Globals"><a href="#Globals" class="headerlink" title="Globals"></a>Globals</h2><p>定義你需要的 global variables，</p>
+<p>這裡並不是像平常寫 code 時在 assign 值給 variable 一樣，</p>
+<p>因為我們並不會去執行程式碼，只會進行靜態的分析，</p>
+<p>所以我們做的事情只是確認這個 global variable 是有被 define 的，</p>
+<p>舉例來說：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> a = globalB</div></pre></td></tr></table></figure>
+<p>上述的 <code>globalB</code> 就是未被 define 的 global variable。</p>
+<p>假如我們定義了不能接受未 define variable 的規則(rule)，</p>
+<p>linter 就會把這個視為語法檢查不通過。</p>
+<p>所以我們必須要讓 eslint 知道這個全域變數是有被 define 過的：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"globals"</span>: &#123;</div><div class="line">        <span class="attr">"globalB"</span>: <span class="literal">true</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如此一來 parser 在看到 <code>globalB</code> 時就會知道：</p>
+<p>「啊！這不就是寫在 globals 裡面的 globalB 嗎？沒事兒沒事兒」</p>
+<h2 id="Plugins"><a href="#Plugins" class="headerlink" title="Plugins"></a>Plugins</h2><p>eslint 能夠很靈活的安裝第三方的 plugin。</p>
+<p>這裡就是我們平常在使用 airbnb 的 config 時會用到的地方 XD，</p>
+<p>通常名字會長這樣：<code>eslint-plugin-*</code>，你可以省略掉前面這一段 prefix，</p>
+<p>比如說<code>eslint-plugin-demo</code>，在 <code>.eslintrc</code> 可以這樣引入：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"plugins"</span>: [</div><div class="line">        <span class="string">"demo"</span></div><div class="line">    ]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>待會提到 rule 時，再來解釋要怎樣引用 plugin 裡的東西。</p>
+<h2 id="Rules"><a href="#Rules" class="headerlink" title="Rules"></a>Rules</h2><p>rule 就是我們在 style guide 中定義的規則，</p>
+<p>可以針對嚴重程度設定 error level：</p>
+<p>分別是 <code>off</code>, <code>warn</code>, <code>error</code>，</p>
+<blockquote>
+<p>它們分別對應到 0, 1, 2 三個數字，</p>
+<p>也就是說 <code>{&quot;curly&quot;: &quot;error&quot;}</code> 和 <code>{&quot;curly&quot;: 2}</code> 是一樣的意思。</p>
+</blockquote>
+<p>看例子可能會清楚一點：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"plugins"</span>: [</div><div class="line">        <span class="string">"plugin1"</span></div><div class="line">    ],</div><div class="line">    <span class="attr">"rules"</span>: &#123;</div><div class="line">        <span class="attr">"eqeqeq"</span>: <span class="string">"off"</span>,</div><div class="line">        <span class="attr">"curly"</span>: <span class="string">"error"</span>,</div><div class="line">        <span class="attr">"plugin1/rule1"</span>: <span class="string">"error"</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這裡的 rule 都是 eslint 事先定義好的規則，</p>
+<p>想看有哪些的話一樣可以到官方文件去看，</p>
+<p>不過我想應該是不會有人一條條看完就是：<a href="http://eslint.org/docs/rules/" target="_blank" rel="external">eslint: rules</a></p>
+<p>同樣的，我們可以藉由 <code>&lt;pluginName&gt;/rule</code> 來獲取 plugin 底下定義的 rule。</p>
+<p>補充一下，你也可以在一些特別的時候 enable 或 disable rule。</p>
+<p>舉例來說有一條規則是 code 裡面不要有任何 <code>console.log</code>，</p>
+<p>但有些地方一定要存在 <code>console.log</code> 該怎麼辦呢？</p>
+<p>你可以讓 eslint ignore 掉這整個 file，不過這不是個好解法。</p>
+<p>更好的做法應該是在那幾行 code 前面加上 “inline disable” 的 comment：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">server.listen(<span class="number">8080</span>, <span class="string">'0.0.0.0'</span>, (err) =&gt; &#123;</div><div class="line">  <span class="comment">/* eslint-disable no-console */</span></div><div class="line">  <span class="keyword">if</span> (err) &#123;</div><div class="line">    <span class="built_in">console</span>.log(err);</div><div class="line">  &#125;</div><div class="line">  <span class="built_in">console</span>.log(<span class="string">'Listening at http://0.0.0.0:8080/'</span>);</div><div class="line">  <span class="comment">/* eslint-enable no-console */</span></div><div class="line">&#125;);</div></pre></td></tr></table></figure>
+<p><code>/* eslint-disable no-console */</code>底下的 code 都會關閉 <code>no-console</code>這個規則，</p>
+<p>但<code>/* eslint-enable no-console */</code>會把 <code>no-console</code> 這個規則再次打開。</p>
+<p>兩個搭配起來的結果就是在這兩段 comment 中間的 code 不會啟用 <code>no-console</code> 這個規則。</p>
+<h2 id="Extends"><a href="#Extends" class="headerlink" title="Extends"></a>Extends</h2><p>總結上述幾點，其實 extends 這個 array 裡面放的其實是個完整的 config，</p>
+<p>你也可以直接 extend 別人 export 出來的 config。</p>
+<p>這也是為什麼當你安裝別人的 extends 時，</p>
+<p>會以 <code>eslint-config-*</code>來當作 package 名稱，</p>
+<p>而不是用 extension 的原因。</p>
+<blockquote>
+<p>同樣的，在寫 config 時，可以忽略 <code>eslint-config</code> 這個 prefix</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    &quot;extends&quot;: &quot;airbnb&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="Others"><a href="#Others" class="headerlink" title="Others"></a>Others</h2><ul>
+<li><p>跟 git 一樣，可以忽略掉某些檔案：<code>.eslintignore</code></p>
+</li>
+<li><p>前面的 rules 看起來都是別人幫你建好的，你也可以參照 <a href="http://eslint.org/docs/developer-guide/working-with-rules" target="_blank" rel="external">working with rules</a> 來定義你自己的 rule。</p>
+</li>
+</ul>
+<blockquote>
+<p>對我而言現有的 rules 幾乎已經把我能想到的模組都開發完，</p>
+<p>理解 linter 對我來說最重要的是知道「哪些東西是我要的」，</p>
+<p>最後再將其組裝起來，而不是從頭造一遍輪子。</p>
+</blockquote>
+<ul>
+<li><p>同理，你也可以自己開發 plugin。</p>
+</li>
+<li><p>你可以 extend 其他人的 config，但你也可以在最外層去把 rule 給覆寫掉。</p>
+</li>
+</ul>
+<h1 id="Practical-Usage"><a href="#Practical-Usage" class="headerlink" title="Practical Usage"></a>Practical Usage</h1><p>如果寫完 eslint 設定，卻還要每次寫完 code 都自己跑一次：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$&gt; eslint file.js</div></pre></td></tr></table></figure>
+<p>這是相當反人性的事情，所以在有了前述的背景知識後，</p>
+<p>我們來看看日常開發中是如何使用的，</p>
+<p>以下就兩個比較常見的方法來介紹，沒有誰好誰壞，</p>
+<p>全看怎樣比較適合你的團隊。</p>
+<p>我盡量不為讀的人預設什麼預備知識，</p>
+<p>但懂一些 git 以及 webpack 的話，</p>
+<p>設定起來會相當的 trivial：</p>
+<ul>
+<li><p>Webpack</p>
+<ul>
+<li>邊開發時就邊檢測你是否有違反規則</li>
+</ul>
+</li>
+<li><p>git hook</p>
+<ul>
+<li>在 commit 前檢查是否符合規則</li>
+</ul>
+</li>
+</ul>
+<p>其實編輯器也有許多可以搭配 linter 的東西，</p>
+<p>但鑑於所有開發者使用的編輯器種類太多，</p>
+<p>而且編輯器的設置相對簡單，</p>
+<p>所以這裡不會再贅述編輯器上面的設定。</p>
+<h2 id="Integration-with-webpack"><a href="#Integration-with-webpack" class="headerlink" title="Integration with webpack"></a>Integration with webpack</h2><p>首先要先安裝 <code>eslint-loader</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$&gt; npm install -D eslint-loader</div></pre></td></tr></table></figure>
+<p>接著到 <code>webpack.config.js</code> ，只要看 loaders 這個屬性就好了:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="built_in">module</span>: &#123;</div><div class="line">        loaders: [</div><div class="line">            &#123;</div><div class="line">                test: <span class="regexp">/\.js[x]?$/</span>,</div><div class="line">                exclude: <span class="regexp">/node_modules/</span>,</div><div class="line">                loaders: [<span class="string">'babel'</span>, <span class="string">'eslint'</span>]</div><div class="line">            &#125;</div><div class="line">        ]</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>loaders array 中的順序是相當重要的，因為它的順序是從最後面開始往前執行。</p>
+<p>也就是說在讀取到 js 或是 jsx 檔案時，</p>
+<p>會先經過 eslint 檢查，再進去 babel 轉譯。</p>
+<blockquote>
+<p>反之的話，一定會噴錯噴得滿天飛 XD </p>
+<p>而且這樣 eslint 去檢查的就是轉譯過後的程式碼了</p>
+</blockquote>
+<p>但更好的方式是把 eslint-loader 放在 <code>preloaders</code> 中：</p>
+<blockquote>
+<p>馬的我也是第一次知道有這東西，webpack 的 config 就是這麼令人驚喜</p>
+</blockquote>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">&#123;</div><div class="line">    <span class="built_in">module</span>: &#123;</div><div class="line">        preLoaders: [</div><div class="line">            &#123;</div><div class="line">                test: <span class="regexp">/\.js[x]?$/</span>,</div><div class="line">                exclude: <span class="regexp">/node_modules/</span>,</div><div class="line">                loader: <span class="string">'eslint'</span></div><div class="line">            &#125;</div><div class="line">        ],</div><div class="line">        loaders: [</div><div class="line">            &#123;</div><div class="line">                test: <span class="regexp">/\.js[x]?$/</span>,</div><div class="line">                exclude: <span class="regexp">/node_modules/</span>,</div><div class="line">                loader: <span class="string">'babel'</span></div><div class="line">            &#125;</div><div class="line">        ]</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如此在開發途中，只要語法有違反規則，</p>
+<p>就是視同為 error。</p>
+<p>現在你已經有一個自動化的 linter 了。</p>
+<p>補充一下，有些人可能會用 webpack 的 provide plugin，</p>
+<p>去省掉一些 <code>../../../../actions/doSomething.js</code> 的程式碼，</p>
+<p>這時候你可能會需要這個 plugin: <a href="https://www.npmjs.com/package/eslint-import-resolver-webpack" target="_blank" rel="external">eslint-import-resolver-webpack</a>，</p>
+<p>然後你要在 <code>.eslintrc</code> 的 settings 裡面加上：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  <span class="attr">"settings"</span>: &#123;</div><div class="line">    <span class="attr">"import/resolver"</span>: &#123;</div><div class="line">      <span class="attr">"webpack"</span>: <span class="string">"webpack.config.js"</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這樣子當你使用 <code>no-unresolved</code> 這條規則時，</p>
+<p>eslint 會先去檢查你在 provide 裡的 alias，</p>
+<p>再來看有沒有辦法 resolve 這個 path。</p>
+<h2 id="Integration-with-git-hooks"><a href="#Integration-with-git-hooks" class="headerlink" title="Integration with git hooks"></a>Integration with git hooks</h2><blockquote>
+<p>如果你很熟悉 git 的話甚至可以不用安裝這套件 XD </p>
+</blockquote>
+<p>git hook 能做的事情就是讓開發者在執行某些 git 操作前，</p>
+<p>自動得去執行某些 scripts，</p>
+<p>不過首先，我們要先將 lint 的 script 給寫出來才行</p>
+<p>接著在 <code>package.json</code> 裡面：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"scripts"</span>: &#123;</div><div class="line">        <span class="attr">"lint"</span>: <span class="string">"./node_modules/eslint/bin/eslint.js target.js"</span>,</div><div class="line">    &#125;,</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再來只要執行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$&gt; npm run lint</div></pre></td></tr></table></figure>
+<p>就會自動的去做 lint，簡單的 script 完成了，</p>
+<p>接下來就是跟 git hook 結合的時候，</p>
+<p>會需要用到 <code>husky</code> 這個套件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$&gt; npm install husky --save-dev</div></pre></td></tr></table></figure>
+<p>會用它的原因是因為它用起來簡單粗暴，</p>
+<p>不管你要用哪個 hook，只要把名字放在 npm script 中：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="string">"scripts"</span>: &#123;</div><div class="line">        <span class="string">"lint"</span>: <span class="string">"./node_modules/eslint/bin/eslint.js demoStore.js"</span>,</div><div class="line">        <span class="string">"precommit"</span>: <span class="string">"npm run lint"</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>你的 git hook 就設定完成了</p>
+<blockquote>
+<p>precommit 就是在 commit 之前我們會去執行 <code>npm run lint</code>這個 script，</p>
+<p>這裡有個對應的 <a href="https://github.com/typicode/husky/blob/master/HOOKS.md" target="_blank" rel="external">hooks 表格</a></p>
+<p>你可以挑一個在適當的時機執行語法的 lint</p>
+</blockquote>
+<h2 id="Other-solution"><a href="#Other-solution" class="headerlink" title="Other solution"></a>Other solution</h2><p>不過如果每次 Commit 都要跑一次 lint，讓你很煩的話，</p>
+<p>實務上的做法也可以只整合在 IDE 以及 CI server 上就足夠。</p>
+<p>假如你還是要保留原本的流程，</p>
+<p>但在某些整理 commit 時並不需要重新執行 lint的話，</p>
+<p>也可以在 commit 時加上 <code>--no-verify</code>或<code>-n</code>。</p>
+<p>還有一個做法是使用 <a href="https://github.com/okonet/lint-staged" target="_blank" rel="external"><code>lint-staged</code></a> 這個套件，</p>
+<p>簡單的說，它會讓 linter 只檢查新放上 stage 的 code，</p>
+<blockquote>
+<p>在 git 中執行 add 之後，會把 file 放到 stage 上，</p>
+<p>這就是為什麼他要命名為 <code>lint-staged</code>。</p>
+</blockquote>
+<p>這樣每次的 Commit 就不用重新檢查一次全部的程式碼了。</p>
+<blockquote>
+<p>快速的想過一遍之後，<code>lint-staged</code>可能會有個小 gotcha，</p>
+<p>可能在 <code>no-unresolved</code> 這條 rule 上面犯錯。</p>
+<p>舉例來說 a 檔案會 require <code>./b</code>，</p>
+<p>然後我把 b 刪掉了，這次 a 檔案並不會上 stage，</p>
+<p>所以這次檢查並不會把這個錯誤給檢查出來，</p>
+<p>但整體而言其實還是為我們省了不少時間，</p>
+<p>就看個人怎麼選擇啦！</p>
+</blockquote>
+<h1 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h1><p>在學習 eslint 的過程中，</p>
+<p>對於這種自動化、提升團隊程式碼品質的東西又有了一些心得，</p>
+<p>像是 eslint-loader 以及 git hook 的使用時機都是。</p>
+<p>同時也理解到這種 pluggable 的特性在開發者的世界裡能帶來極大的成功，</p>
+<p>看看 webpack、babel，以及 eslint 都是因為其容易製作 plugin 的特性，</p>
+<p>讓開發者自主的開發出優質的插件來讓整個生態系更蓬勃。</p>
+<p>也許工具會一代代推陳出新，</p>
+<p>但是這種我為人人、人人為我的系統思維是不會變的。</p>
+<p>最後，</p>
+<p>在前面有說過 coding style 之於指喻，</p>
+<p>最近實務上有個算小型的 project 從一開始開發時並沒有去使用 eslint，</p>
+<p>到了今天把簡單的 style guide 訂出來之後，（大概就是四條 rules 而已，沒有直接引用 airbnb 那一套）</p>
+<p>結果是這個樣子：</p>
+<p><img src="http://i.imgur.com/FFLkTXA.png" alt="errro"></p>
+<p>嗯⋯⋯</p>
+<p>晚了一點以後更新成 airbnb 的 config 然後自己修改一下 rule，</p>
+<p>變成：</p>
+<p><img src="http://i.imgur.com/PYzEmMf.png" alt="error2"></p>
+<p>….</p>
+<p><img src="http://i.imgur.com/2yJBwXp.jpg" alt="eyes"></p>
+<p>這一定是假的。</p>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><ul>
+<li><p><a href="http://eslint.org/" target="_blank" rel="external">eslint</a></p>
+</li>
+<li><p><a href="http://abalone0204.github.io/2016/04/25/Super-tiny-compiler/" target="_blank" rel="external">Super tiny compiler</a></p>
+</li>
+<li><p><a href="http://www.jianshu.com/p/35b9fc5467e0" target="_blank" rel="external">谈谈Parser - 王垠</a></p>
+</li>
+<li><p><a href="https://blog.gopheracademy.com/advent-2014/parsers-lexers/" target="_blank" rel="external">Handwritten Parsers &amp; Lexers in Go - Gopher Academy</a></p>
+</li>
+<li><p><a href="https://github.com/MoOx/eslint-loader" target="_blank" rel="external">eslint-loader</a></p>
+</li>
+</ul>
+<blockquote>
+<p>感謝 <a href="https://github.com/wuct" target="_blank" rel="external"><code>@ctwu</code></a> 、李俊緯對開發流程中整合 eslint 的建議</p>
+<p>感謝 Amobiz Chen 提供 <code>lint-staged</code>這個工具</p>
+<p>感謝陳威霖提醒我要加上 inline-disable 的用法 XD</p>
+</blockquote>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/07/15/illinois-text-mining-week-1/" class="prev">PREV</a><a href="/2016/06/16/clv-beta-version/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/07/11/eslint-fxcking-setup/';
+var disqus_title = '淺入淺出 eslint 與實作';
+var disqus_url = 'http://abalone0204.github.com/2016/07/11/eslint-fxcking-setup/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

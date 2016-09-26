@@ -1,0 +1,32 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 搬家到 Hexo · De-bug: 一鍵跑版</title><meta name="description" content="CI, hexo"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">搬家到 Hexo</h1><div class="post-time">Apr 25, 2016</div><div class="post-content"><p>雖然是在同個 repository，而且也是用 github page 來 host，</p>
+<p>但這次把 travis CI 加進來以後，改部落格變得方便多了！</p>
+<p>這樣就沒有理由阻止自己偷懶不寫文章了吧 XD</p>
+<a id="more"></a>
+<ul>
+<li><a href="https://hexo.io/" target="_blank" rel="external">hexo</a></li>
+</ul>
+<p>跟蠻多 static page generators 一樣，</p>
+<p>可以跟 github page 做很好的搭配，</p>
+<p>只是這一次，把 travis CI 也整進來了。</p>
+<p>原因很簡單，個人的部落格，內容是<strong>公開的</strong>，</p>
+<p>而 travis CI 對於 open source 的專案則是永久免費的。</p>
+<p>實在沒有不用的理由 XD</p>
+<p>不過部署的時候，會需要有寫入 repository 的權限，</p>
+<p>我參考了以下這篇文章：</p>
+<ul>
+<li><a href="https://zespia.tw/blog/2015/01/21/continuous-deployment-to-github-with-travis/" target="_blank" rel="external">用 Travis CI 自動部署網站到 GitHub</a></li>
+</ul>
+<p>寫的很清楚 XD</p>
+<p>我自己是另外 gen 了一個 public key 跟 private key，</p>
+<p>所以會需要注意一下命名，</p>
+<p>卡了半小時在那邊處理字打錯的白痴錯誤。</p>
+<p>基本設定這樣就足以，接下來再來把 ga 和 留言功能加進來了。</p>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/04/25/Super-tiny-compiler/" class="prev">PREV</a><a href="/2016/02/01/circle-js-3/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/04/25/migrate-to-hexo/';
+var disqus_title = '搬家到 Hexo';
+var disqus_url = 'http://abalone0204.github.com/2016/04/25/migrate-to-hexo/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

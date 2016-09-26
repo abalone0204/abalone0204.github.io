@@ -1,0 +1,486 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> Saga Pattern 在前端的應用 · De-bug: 一鍵跑版</title><meta name="description" content="redux, JavaScript, redux-saga, saga"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">Saga Pattern 在前端的應用</h1><div class="post-time">May 14, 2016</div><div class="post-content"><blockquote>
+<p>這是篇長文，你可以直接跳到<a href="/2016/05/14/redux-saga/#Catalogue">你想看的地方</a>就好<br>或是直接在 github 上面看我 step by step 的教學<br><a href="https://github.com/abalone0204/redux-thunk-to-saga-tutorial/commit/1a4455b23ce6bc434d17a8c2ebcbf9e80e922be5" target="_blank" rel="external">redux-thunk-to-saga-tutorial</a></p>
+</blockquote>
+<p>先把結論講在一開始，這並不只是一個 library 的使用方法介紹而已，</p>
+<p>因為學習 saga pattern 對於前端工程師是有幫助的，</p>
+<p>主要不出以下三個概念：</p>
+<ul>
+<li><p>好的 UI/UX 該是一個畫面的 transaction</p>
+</li>
+<li><p>User 隨時能夠取消 transaction</p>
+</li>
+<li><p>滿足上述條件實作出來的資料流是要容易被測試的</p>
+</li>
+</ul>
+<p>那<code>redux-saga</code>到底是在解決什麼問題呢？</p>
+<p>答案：</p>
+<ul>
+<li><p>讓我們的非同步 action 能夠更好被開發、維護、測試。</p>
+</li>
+<li><p>讓我們用不同的方式來思考非同步的前端資料流</p>
+</li>
+</ul>
+<a id="more"></a>
+<p><img src="https://upload.wikimedia.org/wikipedia/zh/3/37/Adventure_Time_-_Title_card.png" alt="Adventure time"></p>
+<blockquote>
+<p>saga 的中文翻譯是冒險故事 </p>
+<p>這裡來舉個例子：我們要登入</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">送出登入 request =&gt;</div><div class="line">畫面進入 loading 畫面 =&gt;</div><div class="line">if (登入成功) &#123;</div><div class="line">    取得並把 token 快取起來 =&gt; </div><div class="line">    拿到`username`以及對應的`token` =&gt; </div><div class="line">    done</div><div class="line">&#125; else &#123;</div><div class="line">    顯示錯誤訊息在首頁上</div><div class="line">    done</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>你會怎樣去設計這個資料流呢？</p>
+<p>畫面要有什麼 state ？</p>
+<p>假如登入要可以取消，你要怎樣改變畫面的 state 呢？</p>
+<p>這個流程看似簡單，</p>
+<p>但要處理的乾淨、又好測試，</p>
+<p>是不是事情就沒有那麼直覺了？</p>
+<p>目前看起來好像很抽象，但瞭解後，</p>
+<p><code>redux-saga</code> 並沒有什麼神奇的黑魔法。</p>
+<p>我不認為 <code>redux-saga</code> 的只是拿來取代 <code>redux-thunk</code>的工具，</p>
+<p>重要的應該是 saga 這個 pattern 背後的概念，</p>
+<p>給了你新的方式去思考前端資料流。</p>
+<p><code>送出資料 =&gt; loading 動畫 =&gt; 完成</code></p>
+<p>其實前端的畫面也隱含著 transaction 的概念在裡面。</p>
+<p>我認為如果有出現以下幾個現象，</p>
+<p>那 <code>redux-saga</code> 值得你一試：</p>
+<ul>
+<li><p>學會 generator function 卻無處可應用</p>
+</li>
+<li><p>處理非同步的 action 時，總覺得哪裡怪怪的 =&gt; 回傳 promise 時要怎麼測試</p>
+</li>
+<li><p>純粹好奇 <code>redux-saga</code>能幫助你什麼</p>
+</li>
+</ul>
+<h1 id="Catalogue"><a href="#Catalogue" class="headerlink" title="Catalogue"></a>Catalogue</h1><ul>
+<li><p><a href="#Introduction">Introduction</a></p>
+</li>
+<li><p><a href="#什麼是-Saga">什麼是 Saga</a></p>
+<ul>
+<li><p><a href="#Long-lived-transaction-LLT-有什麼問題">Long lived transaction (LLT)有什麼問題</a></p>
+</li>
+<li><p><a href="#Saga-是一種特殊的-LLT">Saga 是一種特殊的 LLT</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#Front-end-perspective">Front-end perspective (如果你懶得看理論的話可以直接從這裡開始看)</a></p>
+<ul>
+<li><p><a href="#Login-flow">example: Login flow</a></p>
+</li>
+<li><p><a href="#Redux-thunk-的解法與問題">Redux thunk 的解法與問題</a></p>
+</li>
+<li><p><a href="#Front-end-中的-saga">Front-end 中的 saga</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#Refactor-with-redux-saga">Refactor with <code>redux-saga</code></a></p>
+<ul>
+<li><p><a href="#Setup">Setup</a></p>
+</li>
+<li><p><a href="#Effect">Effect</a></p>
+</li>
+<li><p><a href="#Watch-action">Watch action</a></p>
+</li>
+<li><p><a href="#Migrate-Login-Flow-to-saga">Migrate Login Flow to saga</a></p>
+</li>
+<li><p><a href="#Combine-loginFlow-saga">Combine <code>loginFlow</code> saga</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#Abortable-flow-compensating-transaction">Abortable flow(compensating transaction)</a></p>
+<ul>
+<li><p><a href="#fork-and-cancel"><code>fork</code> and <code>cancel</code></a></p>
+</li>
+<li><p><a href="#Test-for-cancelable-flow">Test for cancelable flow</a></p>
+</li>
+<li><p><a href="#Combine-cancelable-loginFlow">Combine cancelable <code>loginFlow</code></a></p>
+</li>
+<li><p><a href="#Conclusion">Conclusion</a></p>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h1><p>有些人會說 <code>redux-saga</code> 的學習曲線比較陡峭，</p>
+<p>其實並不盡然。</p>
+<p>會覺得 <code>redux-saga</code> 太過困難，</p>
+<p>通常就是因為一次就想直接學會、並應用，</p>
+<p>忽略有些預先知識必須要一步一步學習，</p>
+<p>而且有些情況，必須拉高一點視角會比較好看清楚，</p>
+<p>從概念的角度去看，而不是只關注在前端的實作。</p>
+<p>我認為這裡只有三件事情要掌握</p>
+<ul>
+<li><p>什麼是 saga？</p>
+</li>
+<li><p>saga 跟前端開發有什麼關係？</p>
+</li>
+<li><p>redux-saga 的基礎用法</p>
+</li>
+</ul>
+<h1 id="什麼是-Saga"><a href="#什麼是-Saga" class="headerlink" title="什麼是 Saga"></a>什麼是 Saga</h1><p>要學一個東西，把名詞搞懂是很重要的。</p>
+<p>像 router 就是個很直覺又常見的名詞，</p>
+<p>saga 是什麼呢？</p>
+<p><code>redux-saga</code> 有提供一些資源供參考，</p>
+<p>包括了最原始提出 saga 這個 pattern 的<a href="http://www.cs.cornell.edu/andru/cs711/2002fa/reading/sagas.pdf" target="_blank" rel="external">論文</a>。</p>
+<p>一共 11 頁，不過扣掉 acknowledgment 跟 References ，</p>
+<p>就只有 9 頁半啦！</p>
+<p>不過論文中是從 Database 的角度看，</p>
+<p>另一個影片，是從應用在分散式系統的角度去解釋，</p>
+<p>提高了不少複雜度。</p>
+<p>基於以前端的角度，這篇講解 saga 主要會以 paper 上為主。</p>
+<p>saga 其實是個很簡單的概念，</p>
+<p>要應用它也並不困難，</p>
+<p>這篇論文在 DBMS 上實作的原因，</p>
+<p>主要只是要闡明如何實做一個簡潔、有效率的 sagas，</p>
+<p>所以不要擔心接下來講的例子看起來跟 redux 或前端開發沒有關係，</p>
+<p>稍後會提到要怎樣在前端開發中應用 saga 這個 pattern。</p>
+<p>所以看個幾分鐘之後，腦袋裡會冒出許多的問號：「所以 saga 是⋯⋯？」。</p>
+<p>這裡我試著用最簡單的語言解釋 saga 是什麼。</p>
+<p><strong>Saga</strong>，就是個滿足特殊條件的 <strong>LLT</strong>(Long lived transaction)。</p>
+<blockquote>
+<p>待會會說是什麼特殊條件。</p>
+<p>如果你不知道什麼是 Transaction：</p>
+<p>是 Database 上常會用到（但不僅止侷限於 Database）的名詞，</p>
+<p>即是「交易」。</p>
+<p>「交易」聽起來很抽象，</p>
+<p>其實他要敘述的就是銀貨兩訖後，</p>
+<p>一個交易才算是完成，</p>
+<p>假如銀貨不兩訖的話，那要退回最一開始的時候，</p>
+<p>買賣雙方的狀態會退回交易前的狀態，不會有任何改變。</p>
+</blockquote>
+<h2 id="Long-lived-transaction-LLT-有什麼問題"><a href="#Long-lived-transaction-LLT-有什麼問題" class="headerlink" title="Long lived transaction (LLT)有什麼問題"></a>Long lived transaction (LLT)有什麼問題</h2><p>Long lived transaction 是什麼呢？</p>
+<p>而 LLT 就是一個長時間的 transaction，</p>
+<p>就算沒有受到其他影響，</p>
+<p>整個完成可能也需要數小時或數天。</p>
+<p>聽起來，似乎是很糟糕的概念對吧？</p>
+<p>因為為了實現 transaction，我們通常會把正在 transaction 中的 object lock 住，</p>
+<p>讓其他人沒辦法更動它。</p>
+<p>（維持資料的 consistency）</p>
+<p>所以這麼長時間的 transaction，</p>
+<p>會造成兩個問題：</p>
+<ul>
+<li><p>較高的失敗率</p>
+</li>
+<li><p>dead lock 造成的長時間 delay</p>
+</li>
+</ul>
+<blockquote>
+<p>舉個很實際的例子，就是江蕙演唱會的訂票。</p>
+<p>購票的時間可能會是某一段時間，</p>
+<p>而我們最終要確認訂票的數，這就會是一個 LLT。</p>
+</blockquote>
+<p>為解決這個問題，</p>
+<p>我們這裡可以假設這個 LLT：<code>T</code></p>
+<p>可以被拆成許多相互獨立的 subtransaction的集合:<br><code>t_1</code>~<code>t_n</code>。</p>
+<p>但如果我們不會希望<code>t_1</code>~<code>t_n</code>分別被送進 DB 並且記錄下來。</p>
+<blockquote>
+<p>以上述江蕙演唱會的例子，<br>每個小<code>t</code>就會是每筆訂票紀錄</p>
+</blockquote>
+<p>如下圖：</p>
+<p><img src="http://i.imgur.com/sUodUqB.jpg" alt="first state"></p>
+<p>假如每個 transaction 都一次就成功，</p>
+<p>而且沒有人退票的話，那個 transaction 就會正常的被執行：</p>
+<p><img src="http://i.imgur.com/2P9E1wP.jpg" alt="all success"></p>
+<p>因為假如有一個失敗的話，</p>
+<p>那 <code>T</code> 就不算是完成的 transaction。</p>
+<p>儘管如此，這樣做也比一般的 transaction 帶來了一些彈性，</p>
+<p>我們可以隨意的插入 subtransaction。</p>
+<p>接著就來解釋 saga 運用什麼樣的設計方式來解決這些問題。</p>
+<h2 id="Saga-是一種特殊的-LLT"><a href="#Saga-是一種特殊的-LLT" class="headerlink" title="Saga 是一種特殊的 LLT"></a>Saga 是一種特殊的 LLT</h2><p>第一件要注意到的事就是 saga 仍然是個 LLT。</p>
+<blockquote>
+<p><code>saga</code>: LLT that can be broken up into a collection of subtransactions that can be iterleaved in any way with other transactlons </p>
+</blockquote>
+<p>作為一個 LLT，</p>
+<p>假如任何一個 saga 中的 subtransaction: <code>t_i</code> 單獨執行了，</p>
+<p>我們應該要有一個 compensating transaction <code>c_i</code> 可以將它 undo。</p>
+<p>這裡的 compensating transaction，</p>
+<p>指的是從語意上的觀點來看，</p>
+<p>而不是整個系統都得還原到 <code>t_i</code> 發生的那個時間點。</p>
+<p>再看一次上面這段話，魔鬼就藏在細節裡，</p>
+<p>這正是 saga 為什麼可以解決 LLT 問題的關鍵。</p>
+<blockquote>
+<p>你可能會覺得這兩件事不是差不多嗎？</p>
+<p>舉個例子：</p>
+<p>如果有個 LLT : <code>T</code> 是要記住所有買江蕙票的座位數，</p>
+<p>底下每個訂票都是一個 subtransaction: <code>t</code> 。</p>
+<p>假設 <code>t_i</code> 要被買票的人取消，</p>
+<p>我們執行 <code>c_i</code>時，</p>
+<p>只是把買的座位數從 database 裡面減掉</p>
+<p>而不是讓 database 回到 <code>t_i</code>發生前的時間點</p>
+</blockquote>
+<p>所以我們可以得到一個簡單的公式，</p>
+<p>Saga’s gurantee：</p>
+<ul>
+<li><p>如果全部都執行成功(Successful saga)：</p>
+<ul>
+<li><code>t_1</code>, <code>t_2</code>…., <code>t_n</code></li>
+</ul>
+</li>
+</ul>
+<p>示意圖：</p>
+<p><img src="http://i.imgur.com/RNCrTe0.gif" alt="success gif"></p>
+<ul>
+<li><p>失敗的話(Unsuccessful saga)：</p>
+<ul>
+<li><code>t_1</code>, <code>t_2</code>…., <code>t_n</code>, <code>c_n</code>…, <code>c_1</code></li>
+</ul>
+</li>
+</ul>
+<p><img src="http://i.imgur.com/thzgNNg.gif" alt="failed"></p>
+<blockquote>
+<p>這裡可以注意到其實 <code>c4</code> 是沒有做任何事情的，</p>
+<p>在實作時候如果是最後一個 transaction failed 掉的話，可以忽略 <code>c4</code></p>
+<p>不過就算執行了也不應該會出錯</p>
+<p>因為每個執行應該都是 idempotent（冪等）的</p>
+</blockquote>
+<p>如此一來我們就掌握了對 saga 的基本知識了！</p>
+<p>在進入<code>redux-saga</code>前，先來看看我們會遇到什麼問題</p>
+<h1 id="Front-end-perspective"><a href="#Front-end-perspective" class="headerlink" title="Front-end perspective"></a>Front-end perspective</h1><h2 id="Login-flow"><a href="#Login-flow" class="headerlink" title="Login flow"></a>Login flow</h2><p>講了這麼多抽象概念的事情，</p>
+<p>讓我們回到實務上來看，</p>
+<p>來看最開始的這個例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">送出登入 request =&gt;</div><div class="line">畫面進入 loading 畫面 =&gt;</div><div class="line">if (登入成功) &#123;</div><div class="line">    取得並把 token 快取起來 =&gt; </div><div class="line">    拿到`username`以及對應的`token` =&gt; </div><div class="line">    done</div><div class="line">&#125; else &#123;</div><div class="line">    顯示錯誤訊息在首頁上</div><div class="line">    done</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>畫面出來大概是這樣：</p>
+<p><img src="http://i.imgur.com/aWm0IqG.gif" alt="login flow"></p>
+<blockquote>
+<p>以下部分你可能必須要熟悉 <code>redux</code> ，</p>
+<p>或是任何單向資料流的架構，</p>
+<p>我盡量不預設讀者有任何預備知識來寫以下的文章 XD</p>
+<p>不過真的不行的時候，會放上參考資料</p>
+</blockquote>
+<p>在 redux 中，如果要改變畫面的狀態(state)，</p>
+<p>我們必須 dispatch 一個 action 到 store 去，</p>
+<p>而對應的 reducer 會根據 action 幫我們生出下一個 state，</p>
+<p>並且將 store 中的 state 更新成對應的新 state。</p>
+<blockquote>
+<p><code>reducer(state , action) =&gt; nextState</code></p>
+<p>假如還是很模糊的話，可以看看 redux 優秀的文件：</p>
+<p><a href="http://redux.js.org/" target="_blank" rel="external">redux</a></p>
+</blockquote>
+<p>來看一下 <code>login</code> 的 reducer 會長什麼樣子：</p>
+<blockquote>
+<p>這裡為了簡化，有刪去一些東西</p>
+</blockquote>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">login</span>(<span class="params">state = &#123;</span></span></div><div class="line">    status: 'init'</div><div class="line">&#125;, action) &#123;</div><div class="line">    <span class="keyword">switch</span> (action.type) &#123;</div><div class="line">        <span class="keyword">case</span> LOGIN_REQUEST:</div><div class="line">            <span class="keyword">return</span> &#123;status: <span class="string">'loading'</span>&#125;</div><div class="line">        <span class="keyword">case</span> LOGIN_SUCCESS:</div><div class="line">            <span class="keyword">return</span> &#123;</div><div class="line">                status: <span class="string">'logined'</span>,</div><div class="line">                username: action.response.username,</div><div class="line">                token: action.response.token</div><div class="line">            &#125;</div><div class="line">        <span class="keyword">case</span> LOGIN_ERROR:</div><div class="line">            <span class="keyword">return</span> &#123;</div><div class="line">                status: <span class="string">'error'</span>,</div><div class="line">                error: action.error</div><div class="line">            &#125;</div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            <span class="keyword">return</span> state</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>歸類成以下幾個結果：</p>
+<ul>
+<li><p><code>LOGIN_REQUEST</code>：當我們送出<code>LOGIN_REQUEST</code>這個 action 時，會進入 loading 狀態</p>
+</li>
+<li><p><code>LOGIN_SUCCESS</code>：登入成功，會拿到 <code>username</code> 以及對應的 <code>token</code></p>
+</li>
+<li><p><code>LOGIN_ERROR</code>：登入失敗，會拿到錯誤訊息</p>
+</li>
+</ul>
+<p>那真正執行的時候該如何執行呢？</p>
+<h2 id="Redux-thunk-的解法與問題"><a href="#Redux-thunk-的解法與問題" class="headerlink" title="Redux thunk 的解法與問題"></a>Redux thunk 的解法與問題</h2><p>Thunk？Is it good to drink?</p>
+<p>來看一下維基百科的解釋：</p>
+<blockquote>
+<p>In computer programming, <strong>a thunk is a subroutine that is created, often automatically, to assist a call to another subroutine.</strong></p>
+</blockquote>
+<p>只截錄一小段，剩下的多看也只是搞混。</p>
+<p>簡單說就是我們為了把一個 subroutine A 的工作，</p>
+<p>帶到另一個 subroutine B 做完，</p>
+<p>中間需要一個橋樑：subroutine C，</p>
+<p>這個 C 就是 thunk 啦！</p>
+<p>在 redux 中，我們如果要讓一個 action 能夠更新，</p>
+<p>必須要 dispatch 它。</p>
+<p>所以上述的<code>login</code>流程大概會長這個樣子：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">loginFlow</span>(<span class="params">&#123;username, password&#125;</span>) </span>&#123;</div><div class="line">    <span class="keyword">return</span> (dispatch) =&gt; &#123;</div><div class="line">        dispatch(loginRequest())</div><div class="line">        loginAPI(&#123;username, password&#125;)</div><div class="line">            .then(response =&gt; &#123;</div><div class="line">                dispatch(loginSucess(response))    </div><div class="line">            &#125;)</div><div class="line">            .catch(error =&gt; &#123;</div><div class="line">                dispatch(loginError(error))</div><div class="line">            &#125;)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p><code>loginRequest</code> 是一個 action creator，<br>會回傳 <code>{type: LOGIN_REQUEST}</code>這個 object。</p>
+</blockquote>
+<p>這裡回傳的就是一個 thunk，</p>
+<p>因為我們在這個 action 裡面同時得完成：</p>
+<ul>
+<li><p>送request</p>
+</li>
+<li><p>收到 response data</p>
+</li>
+<li><p>處理錯誤</p>
+</li>
+</ul>
+<p>所以我們必須把 dispatch 給傳進來，</p>
+<p>完成原本只靠單個 subroutine(一般的 action creator) 無法做到的事情。</p>
+<p>這裡有什麼問題呢？</p>
+<ul>
+<li><p>你要如何去測試這個一連串的動作？</p>
+</li>
+<li><p>這裡回傳的是一個 promise，它無法被 abort，如果我們今天想加上取消按鈕呢？</p>
+<ul>
+<li>更 low level 一點的問法：你要在哪裡 dispatch <code>loginCancel</code>這個 action 呢？</li>
+</ul>
+</li>
+</ul>
+<p>當然， login 是一個相對簡易的流程，</p>
+<p>假如遇到有更多 state 要處理，</p>
+<p>無法寫出測試以及不那麼直覺的語法，</p>
+<p>將會為我們的開發帶來一些問題。</p>
+<h2 id="Front-end-中的-saga"><a href="#Front-end-中的-saga" class="headerlink" title="Front-end 中的 saga"></a>Front-end 中的 saga</h2><p>這裡的一整個 <code>loginFlow</code>，其實就是一個 LLT(長時間的 transaction)，</p>
+<blockquote>
+<p><a href="#Long-lived-transaction-LLT-有什麼問題">Long lived transaction 是什麼？</a></p>
+<p>可以看完這一段再回到這裡 XD</p>
+</blockquote>
+<p>底下的 subtransaction 就是各個 action(request, success, error)。</p>
+<p>有了這樣的概念之後，剩下來的事就簡單多了。</p>
+<p>而且 saga 就是底下每個 transaction 都附帶 compensating transaction 的 LLT，</p>
+<p>也就是說上述的 abort ，在 saga pattern 之下是內建的。</p>
+<h1 id="Refactor-with-redux-saga"><a href="#Refactor-with-redux-saga" class="headerlink" title="Refactor with redux-saga"></a>Refactor with <code>redux-saga</code></h1><h2 id="Setup"><a href="#Setup" class="headerlink" title="Setup"></a>Setup</h2><blockquote>
+<p>這裡跟概念比較沒關係，</p>
+<p>但環境設定絕對是許多人卡關的第一步。</p>
+</blockquote>
+<p>首先要建立一個 sagas 資料夾，</p>
+<p>底下有一個 rootSaga，它會是一個 generator function：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span>* <span class="title">rootSaga</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">yield</span> [</div><div class="line">        <span class="comment">// to be done</span></div><div class="line">    ]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接著在 middleware 中將它跑起來。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> rootSaga <span class="keyword">from</span> <span class="string">'./sagas'</span></div><div class="line"></div><div class="line"><span class="keyword">const</span> sagaMiddleware = createSagaMiddleware()</div><div class="line"></div><div class="line"><span class="keyword">const</span> store = createStore(rootReducer,</div><div class="line">  applyMiddleware(thunkMiddleware, sagaMiddleware)</div><div class="line">)</div><div class="line"></div><div class="line">sagaMiddleware.run(rootSaga)</div></pre></td></tr></table></figure>
+<p>這裡的基本設定，其實每次都大同小異，</p>
+<p>所以就不再多著墨底下發生什麼事情。</p>
+<h2 id="Effect"><a href="#Effect" class="headerlink" title="Effect"></a>Effect</h2><p>前面有提到的 subtransaction，可以很粗略的對應到這裡的 <code>effect</code>。</p>
+<p>saga 不出以下幾種情形：</p>
+<ul>
+<li><p>監聽 action 發生 -&gt; take, takeEvery</p>
+</li>
+<li><p>執行 transaction -&gt; put </p>
+</li>
+<li><p>取消 transaction -&gt; cancel</p>
+</li>
+</ul>
+<p>右邊的就是我們在 redux-saga 中對應到的 helper function，</p>
+<p>他們就是 action creactor 一樣，會回傳一個物件，</p>
+<p>不過這一次是回傳一個 effect ，而不是 action，</p>
+<p>e.q: <code>take({type: LOGIN_REQUEST})</code> 就是產生一個拿到 loginRequest 的 effect。</p>
+<p>接著就來把 code 改寫吧！</p>
+<h2 id="Watch-action"><a href="#Watch-action" class="headerlink" title="Watch action"></a>Watch action</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> &#123;</div><div class="line">    takeEvery</div><div class="line">&#125; <span class="keyword">from</span> <span class="string">'redux-saga/effects'</span></div><div class="line"><span class="keyword">import</span> &#123;</div><div class="line">    LOGIN_REQUEST,</div><div class="line">    LOGIN_SUCCESS,</div><div class="line">    LOGIN_ERROR</div><div class="line">&#125; <span class="keyword">from</span> <span class="string">'../actions/login.js'</span></div><div class="line"></div><div class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span>* <span class="title">watchRequestLogin</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">yield</span> takeEvery(LOGIN_REQUEST, loginFlow)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span>* <span class="title">loginFlow</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="comment">// to be done</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>值得注意的是這裡都是 generator function，</p>
+<p>假如你完全對 generator function 沒有概念的話，</p>
+<p>推薦你看<a href="http://abalone0204.github.io/2016/05/08/es6-generator-func/" target="_blank" rel="external">這篇文章</a>。</p>
+<blockquote>
+<p>是我寫的 XD</p>
+</blockquote>
+<p>這裡的 code 還蠻語義化的，</p>
+<p>就是當我們遇到一個 <code>LOGIN_REQUEST</code> 的 action ，</p>
+<p>就會執行 <code>loginFlow</code> 這個 function。</p>
+<p>接著是前面提到的好測試，</p>
+<p>我們來測試這個 saga 吧！</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">describe(<span class="string">'Sagas/ login'</span>, () =&gt; &#123;</div><div class="line">    describe(<span class="string">'watchRequestLogin'</span>, () =&gt; &#123;</div><div class="line">        <span class="keyword">const</span> iterator = watchRequestLogin()</div><div class="line">        it(<span class="string">'should take every login request'</span>, () =&gt; &#123;</div><div class="line">            <span class="keyword">const</span> expected = takeEvery(LOGIN_REQUEST, loginFlow)</div><div class="line">            <span class="keyword">const</span> actual = iterator.next().value</div><div class="line">            assert.equal(expected.name, actual.name)</div><div class="line">        &#125;)</div><div class="line">    &#125;)</div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<p>這裡比較 tricky 是我們測試的是 effect 的名字，</p>
+<p>為什麼不是直接 deepEqual 兩個 effect？</p>
+<p>我們回傳的 effect 其實就是個 object，長相是下面這樣：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&#123; name: <span class="string">'takeEvery(LOGIN_REQUEST, loginFlow)'</span>,</div><div class="line">  next: [<span class="built_in">Function</span>: next],</div><div class="line">  <span class="keyword">throw</span>: [<span class="built_in">Function</span>] &#125;</div></pre></td></tr></table></figure>
+<p>只要 name 是對的，我們就知道他在對應的 <code>LOGIN_REQUEST</code>進來時，</p>
+<p>會執行<code>loginFlow</code> 這個 function。</p>
+<blockquote>
+<p>而且在JavaScript中會判斷這兩個 next 是不同 function XD</p>
+<p>直接測試名字，是我現在想到比較直觀的方法</p>
+</blockquote>
+<h2 id="Migrate-Login-Flow-to-saga"><a href="#Migrate-Login-Flow-to-saga" class="headerlink" title="Migrate Login Flow to saga"></a>Migrate Login Flow to saga</h2><p>Talk is cheap:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span>* <span class="title">loginFlow</span>(<span class="params">action</span>) </span>&#123;</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        <span class="keyword">const</span> response = <span class="keyword">yield</span> call(loginAPI, &#123;</div><div class="line">            username: action.username,</div><div class="line">            password: action.password</div><div class="line">        &#125;)</div><div class="line">        <span class="keyword">yield</span> put(&#123;type: LOGIN_SUCCESS&#125;)</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">catch</span>(error) &#123;</div><div class="line">        <span class="keyword">yield</span> put(&#123;type: LOGIN_ERROR, error&#125;)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>call 跟我們熟悉的 <code>Function.prototype.call</code> 很像！</p>
+<p>不一樣的是，這裡的 call 會回傳的是一個 <code>effect</code>，</p>
+<p>這代表什麼？代表我們能夠很好的測試它，</p>
+<p>而不是真的去 call loginAPI，帶來了無止盡的 mock。</p>
+<p>我們把 loginFlow 的 test 拆成四個部分來看</p>
+<ul>
+<li><p>Initialize</p>
+</li>
+<li><p>Call loginAPI</p>
+</li>
+<li><p>Handle login success</p>
+</li>
+<li><p>Handle login error</p>
+</li>
+</ul>
+<p>前面的 watch function 會把 request 這個 action 丟進來這裡，</p>
+<p>所以我們要先製造出一個待會會用到的 iterator：</p>
+<blockquote>
+<p>執行 Generator function 會返回一個 iterator，<br>然後我們去對這個 iterator 呼叫 <code>next</code> function<br>感謝 CT 的指正。</p>
+</blockquote>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> iterator = loginFlow(&#123;</div><div class="line">    type: LOGIN_REQUEST,</div><div class="line">    username: <span class="string">'denny'</span>,</div><div class="line">    password: <span class="string">'12345678'</span></div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<p>再來則是 call API，注意我們測試的是 call effect，</p>
+<p>而不是真的去呼叫這個 API：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">it(<span class="string">'should call loginAPI'</span>, () =&gt; &#123;</div><div class="line">    <span class="keyword">const</span> expected = call(loginAPI, &#123;</div><div class="line">        username: <span class="string">'denny'</span>,</div><div class="line">        password: <span class="string">'12345678'</span></div><div class="line">    &#125;)</div><div class="line">    <span class="keyword">const</span> actual = iterator.next().value</div><div class="line">    assert.deepEqual(expected, actual)</div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">it(<span class="string">'should handle login success'</span>, () =&gt; &#123;</div><div class="line">    <span class="keyword">const</span> getResponse = () =&gt; (&#123;</div><div class="line">        username: <span class="string">'denny'</span>,</div><div class="line">        token: <span class="string">'fake token'</span></div><div class="line">    &#125;)</div><div class="line">    <span class="keyword">const</span> expected = put(&#123;</div><div class="line">        type: LOGIN_SUCCESS,</div><div class="line">        response: &#123;</div><div class="line">            username: <span class="string">'denny'</span>,</div><div class="line">            token: <span class="string">'fake token'</span></div><div class="line">        &#125;</div><div class="line">    &#125;)</div><div class="line">    <span class="keyword">const</span> actual = iterator.next(getResponse()).value</div><div class="line">    assert.deepEqual(expected, actual)</div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<p>這裡我們可以運用 generator 的特性來把假 error 丟進去XD</p>
+<p>裡面的 catch 接到 error 之後，就會執行 login error 的流程了。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">it(<span class="string">'should handle login error'</span>, () =&gt; &#123;</div><div class="line">    <span class="keyword">const</span> error = <span class="string">'error message'</span></div><div class="line">    <span class="keyword">const</span> expected = put(&#123;</div><div class="line">        type: LOGIN_ERROR,</div><div class="line">        error: <span class="string">'error message'</span></div><div class="line">    &#125;)</div><div class="line">    <span class="keyword">const</span> actual = generator.throw(error).value</div><div class="line">    assert.deepEqual(expected, actual)</div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<h2 id="Combine-loginFlow-saga"><a href="#Combine-loginFlow-saga" class="headerlink" title="Combine loginFlow saga"></a>Combine loginFlow saga</h2><p>首先要把 login 的 saga 接到 root saga 去</p>
+<p>接著我們要來把原本 dispatch 的 loginFlow action 換成 loginFlowSaga 了。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> &#123;watchRequestLogin&#125; <span class="keyword">from</span> <span class="string">'./login.js'</span></div><div class="line"></div><div class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span>* <span class="title">rootSaga</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">yield</span> [</div><div class="line">        watchRequestLogin()</div><div class="line">    ]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再來我們只要把原本放 loginFlow action 的地方，</p>
+<p>換成 <code>loginRequest</code> 這個相對簡單的 action creator 就行了。</p>
+<p>這樣也更符合實際在運作的方式，</p>
+<p>他按下這個按鈕做的 action 就只是送出 request 而已，</p>
+<p>剩下的部分就是讓 saga 中的 generator 去管理，</p>
+<p>而且經由這樣的拆分，我們發現接下來能夠實作 <code>cancel</code> 。</p>
+<blockquote>
+<p>就是 saga 中的 compensating</p>
+</blockquote>
+<p>這裡的 code 就請到 github 上面去看了 XD</p>
+<p>總之我們得到了一樣的效果，但是更容易測試以及維護：</p>
+<p><img src="http://i.imgur.com/aWm0IqG.gif" alt="login flow"></p>
+<h1 id="Abortable-flow-compensating-transaction"><a href="#Abortable-flow-compensating-transaction" class="headerlink" title="Abortable flow(compensating transaction)"></a>Abortable flow(compensating transaction)</h1><p>前面有說到要實作取消這個功能，</p>
+<p>在 promise 中是很困難的，因為 promise 沒有辦法 abort。</p>
+<p>不過我們活用 generator 的，就有辦法很直觀的實作出這個功能來。</p>
+<p>首先當然是先做出 cancel 這個 action，</p>
+<p>以及讓 reducer 根據這個 action 作出對應的改變。</p>
+<p>完成了之後，接下來就是 saga 的重頭戲了。</p>
+<h2 id="fork-and-cancel"><a href="#fork-and-cancel" class="headerlink" title="fork and cancel"></a><code>fork</code> and <code>cancel</code></h2><p>首先我們要將原本的 loginFlow 拆分成兩部分，</p>
+<p>第一部分是原本的 login 流程：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">authorize</span>(<span class="params">&#123;username, password&#125;</span>)</span>&#123;</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        <span class="keyword">const</span> response = <span class="keyword">yield</span> call(loginAPI, &#123;</div><div class="line">            username,</div><div class="line">            password</div><div class="line">        &#125;)</div><div class="line">        <span class="keyword">yield</span> put(&#123;</div><div class="line">            type: LOGIN_SUCCESS,</div><div class="line">            response</div><div class="line">        &#125;)</div><div class="line">    &#125; <span class="keyword">catch</span> (error) &#123;</div><div class="line">        <span class="keyword">yield</span> put(&#123;</div><div class="line">            type: LOGIN_ERROR,</div><div class="line">            error</div><div class="line">        &#125;)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>第二部分則是取消 login：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span>* <span class="title">loginFlow</span>(<span class="params">action</span>) </span>&#123;</div><div class="line">    <span class="keyword">const</span> task = <span class="keyword">yield</span> fork(authorize,&#123;username:action.username, password: action.password&#125;)</div><div class="line">    <span class="keyword">yield</span> take(LOGIN_CANCEL)</div><div class="line">    <span class="keyword">yield</span> cancel(task)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>這裡我們看到兩個新的 effect，第一個是 fork，</p>
+<p>語法基本上跟 call 相同，</p>
+<p>不同的部分是 fork 跟我們在 git 上面的 fork 一樣會開一支 branch出來處理，</p>
+<p>當 yield fork effect 之後，</p>
+<p>就會自動開一條 branch 執行下去，這裡有個 @kuy 做的圖：</p>
+<p><img src="https://pbs.twimg.com/media/CidrNh4UUAAJuSt.jpg" alt="process"></p>
+<p>而如果我們在上述 task 完成之前，就接收到了 <code>loginCancel</code> 這個 action，</p>
+<p>那所有在 <code>task</code> 裡面的動作就會被 abort 掉！</p>
+<blockquote>
+<p>是不是覺得有 race condition 的概念在裡面，<br>沒錯，<code>redux-saga</code>也提供了 <code>race</code> 這個 effect</p>
+</blockquote>
+<h2 id="Test-for-cancelable-flow"><a href="#Test-for-cancelable-flow" class="headerlink" title="Test for cancelable flow"></a>Test for cancelable flow</h2><p>這裡一樣也測試以下幾件事情</p>
+<ul>
+<li><p>是否有 fork 一個新的 task</p>
+</li>
+<li><p>是否能處理 cancel 這個 function</p>
+</li>
+<li><p>拆分出來的 authorize 是否正常運作</p>
+</li>
+</ul>
+<p>首先當然是先看進入 loginFlow 之後有沒有 fork ：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">it(<span class="string">'should fork to authorize'</span>, () =&gt; &#123;</div><div class="line">    <span class="keyword">const</span> expected = fork(authorize, &#123;</div><div class="line">        username: <span class="string">'denny'</span>,</div><div class="line">        password: <span class="string">'12345678'</span></div><div class="line">    &#125;)</div><div class="line">    <span class="keyword">const</span> actual = iterator.next().value</div><div class="line">    assert.deepEqual(expected, actual)</div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<p>接下來是是否能處裡 cancel，</p>
+<p>這裡我們就需要用到 mock 了，</p>
+<p>在最外層的地方從 <code>redux-saga/utils</code> 引用 <code>createMockTask</code>：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> task = createMockTask()</div><div class="line">it(<span class="string">'should take cancel login action'</span>,  () =&gt; &#123;</div><div class="line">    <span class="keyword">const</span> expected = take(LOGIN_CANCEL)</div><div class="line">    <span class="keyword">const</span> actual = iterator.next(task).value</div><div class="line">    assert.deepEqual(expected, actual)            </div><div class="line">&#125;)</div><div class="line"></div><div class="line">it(<span class="string">'should cancel the login task'</span>,  () =&gt; &#123;</div><div class="line">    <span class="keyword">const</span> expected = cancel(task)</div><div class="line">    <span class="keyword">const</span> actual = iterator.next().value</div><div class="line">    assert.deepEqual(expected, actual)            </div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<p>這裡仍然是運用了 generator 的特性來做 mock，</p>
+<p>因為我們再隔一個動作才能取消 task，</p>
+<p>所以在這之前我們要先把 mock 起來的 task 丟進去。</p>
+<p>最後則是確認原本的 authorize 流程還是能正常運作，</p>
+<p>基本上只是把原本的 test case 丟進另一個 describe 的 block 而已，</p>
+<p>詳情可以去看 repo 裡的 code。</p>
+<h2 id="Combine-cancelable-loginFlow"><a href="#Combine-cancelable-loginFlow" class="headerlink" title="Combine cancelable loginFlow"></a>Combine cancelable loginFlow</h2><p>其實這裡蠻簡單的，</p>
+<p>只是新增一個按鈕，按了會 dispatch<code>cancelLogin</code>這個action，</p>
+<p>一切就結束了。 </p>
+<p>像是底下這個樣子：</p>
+<p><img src="http://i.imgur.com/CWhs8xi.gif" alt="cancel"></p>
+<h1 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h1><p>結論就是我們現在終於將 saga pattern 應用在前端了，</p>
+<p>每一個好的 UX 都會是一個 transaction，</p>
+<p>而且比起原本的論文中，我們多了一些彈性，</p>
+<p>可以選擇要不要加上 compensating transiction。</p>
+<p>如此一來我們的非同步 action 變得更好測試，</p>
+<p>而且也不用擔心在每次處理過度複雜的資料流時，</p>
+<p>沒有依據可找了，因為我們都是在組合各種 effect 而已XD</p>
+<h1 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h1><ul>
+<li><p><a href="http://www.cs.cornell.edu/andru/cs711/2002fa/reading/sagas.pdf" target="_blank" rel="external">sagas original paper by Hector Garcia-Molina &amp; Kenneth Salem</a></p>
+</li>
+<li><p><a href="https://github.com/abalone0204/redux-thunk-to-saga-tutorial" target="_blank" rel="external">redux-thunk-to-saga-tutorial</a></p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/05/22/serverless-simple-crud/" class="prev">PREV</a><a href="/2016/05/08/es6-generator-func/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/05/14/redux-saga/';
+var disqus_title = 'Saga Pattern 在前端的應用';
+var disqus_url = 'http://abalone0204.github.com/2016/05/14/redux-saga/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

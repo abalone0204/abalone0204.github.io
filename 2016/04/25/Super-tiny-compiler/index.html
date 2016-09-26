@@ -1,0 +1,317 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> Super tiny compiler · De-bug: 一鍵跑版</title><meta name="description" content="compiler, javascript"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">Super tiny compiler</h1><div class="post-time">Apr 25, 2016</div><div class="post-content"><p>造一個超級小又可愛的 Compiler，</p>
+<p>沒有組語，只有 JavaScript。</p>
+<a id="more"></a>
+<p><img width="731" alt="THE SUPER TINY COMPILER" src="https://cloud.githubusercontent.com/assets/952783/14413766/134c4068-ff39-11e5-996e-9452973299c2.png"></p>
+<h1 id="前言：被玩壞的工具鏈"><a href="#前言：被玩壞的工具鏈" class="headerlink" title="前言：被玩壞的工具鏈"></a>前言：被玩壞的工具鏈</h1><p>之前看到 react-motion 的作者說了這句話：</p>
+<p><blockquote class="twitter-tweet" data-lang="zh-tw"><p lang="en" dir="ltr">Lisp: everything&#39;s data<br>Smalltalk: everything&#39;s an object<br>Haskell: everything&#39;s computation<br>JavaScript: everything&#39;s a library</p>&mdash; Cheng Lou (@_chenglou) <a href="https://twitter.com/_chenglou/status/722640025092009986" target="_blank" rel="external">2016年4月20日</a></blockquote></p>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+<p>老實說，不知道從什麼時候開始，</p>
+<p>我們前端工程師大多都變成工具的使用者，而不是設計者了，</p>
+<p>真正基礎和有價值的事物其實一直都隱藏在我們常使用的工具底下，</p>
+<p>像是我們為了使用 es6 語法的 babel 就是一個很好的例子，</p>
+<p>好好靜下心來寫一個小小的 lisp compiler，瞭解底下發生了什麼事情，</p>
+<p>以及弄懂 compiler 究竟是多麽偉大的想法，</p>
+<p>對於一個前端工程師的身心健康都頗有幫助。</p>
+<blockquote>
+<p>至少對我來說是這樣啦！</p>
+</blockquote>
+<h1 id="Compiler"><a href="#Compiler" class="headerlink" title="Compiler"></a>Compiler</h1><p>提到 Compiler 總是讓人望而生卻，</p>
+<p>在 ember conf 上， James Kyle講的這個 <a href="https://www.youtube.com/watch?v=Tar4WgAfMr4" target="_blank" rel="external">talk</a>，</p>
+<p>讓我覺得該記錄一下這篇文章，</p>
+<p>好好推廣一下 Babel 底下發生了什麼事情。</p>
+<p>首先先來談談 Compiler 是在做什麼的，</p>
+<p>Compiler 的工作是將「來源代碼」轉成「目標語言」。</p>
+<p>除了我們熟知的 gcc 之外，還有 Babel，</p>
+<p>沒錯，我們的生活周遭充滿了 compiler，</p>
+<p>就算是寫 JavaScript，</p>
+<p>如果要使用 es6 以上的語法，</p>
+<p>你就必須得用到 Babel 這個 compiler。</p>
+<p>將你寫的 code(來源代碼)轉成現在瀏覽器上跑得動的 JavaScript（目標代碼）。</p>
+<blockquote>
+<p>關於這樣子使用是否合法，已經在 twitter 問過作者，</p>
+<p>相關的 license 也放在最下方了。</p>
+</blockquote>
+<h1 id="Prerequisite"><a href="#Prerequisite" class="headerlink" title="Prerequisite"></a>Prerequisite</h1><ul>
+<li><p>懂 JavaScript(老實說不懂也沒什麼差)</p>
+</li>
+<li><p>不需要懂 Lisp（沒錯，雖然我很喜歡 Lisp）</p>
+</li>
+</ul>
+<blockquote>
+<p>有人要一起開 SICP 的讀書會嗎？XD</p>
+</blockquote>
+<ul>
+<li><p>懂得寫出簡單的遞回函數</p>
+</li>
+<li><p>Regular Expression</p>
+</li>
+</ul>
+<p>這裡不會使用 ES 6 的語法，</p>
+<p>主要原因只是想讓環境配置盡量單純簡單，</p>
+<p>只要有辦法使用 JavaScript 的人就可以讓這個小 compiler 跑起來。</p>
+<p>這裡要 compile 的不是 babel 或 js，</p>
+<p>而是 lisp，原因是因為語法單純簡單得多，</p>
+<p>能夠讓我們更專注在 compiler 的概念和抽象化上。</p>
+<h1 id="三個步驟"><a href="#三個步驟" class="headerlink" title="三個步驟"></a>三個步驟</h1><p>影片中有提到，要做出一個 compiler，</p>
+<p>基本上只需要三步就完成了：</p>
+<ul>
+<li><p>Parsing：將 code 轉成抽象化的樹狀格式，方便轉化。</p>
+</li>
+<li><p>Trasformation：將 Abastract syntax tree（之後會講到）轉化成好生成 code 的形式</p>
+</li>
+<li><p>Code Generation：產生目標的程式碼，這裡是 JavaScript</p>
+</li>
+</ul>
+<p>坦白說現在看起來是蠻直觀的想法，</p>
+<p>但這種事情，都碼是你想出來之後就覺得很簡單，</p>
+<p>所以做完一遍之後，反而更能感受到設計 compiler 是一件多麽偉大的事情。</p>
+<blockquote>
+<p>想當年臉書紅的時候，多少人說過自己當年也想要做一個社群網站呢 XD</p>
+</blockquote>
+<h1 id="Goal"><a href="#Goal" class="headerlink" title="Goal"></a>Goal</h1><p>開始之前，先定義一下我們要完成什麼事情。</p>
+<p>我們要將：</p>
+<figure class="highlight scheme"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(<span class="name">add</span> <span class="number">22</span> (<span class="name">subtract</span> <span class="number">43</span> <span class="number">2</span>))</div></pre></td></tr></table></figure>
+<p>Compile 成：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">add(<span class="number">22</span>, subtract(<span class="number">43</span>, <span class="number">2</span>))</div></pre></td></tr></table></figure>
+<p>就是這樣而已。<del>應該沒有很難吧？</del></p>
+<p>綜合一下前面講的，我們要寫的 compiler 會長這個樣子：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">compiler</span>(<span class="params">input</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> tokens = lexer(input);</div><div class="line">    <span class="keyword">var</span> ast = parser(tokens);</div><div class="line">    <span class="keyword">var</span> nextAst = transformer(ast);</div><div class="line">    <span class="keyword">var</span> output = codeGenerator(nextAst);</div><div class="line">    <span class="keyword">return</span> output;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="1-Parsing"><a href="#1-Parsing" class="headerlink" title="1. Parsing"></a>1. Parsing</h1><p>Parser（或稱 lexer），</p>
+<p>會將 raw code 先切成一塊一塊後，</p>
+<p>再根據這些小塊的語義來建立一個 <strong>Abstract Syntax Tree</strong>（以下簡稱 AST）。</p>
+<p>這裡很明顯的分成兩個步驟：</p>
+<ol>
+<li><p><strong>Lexical Analysis</strong>：就是分詞啦！把 code 切成一塊塊的 tokens。</p>
+</li>
+<li><p><strong>Syntatic Analysis</strong>：將上一個步驟的 tokens 轉成 AST</p>
+</li>
+</ol>
+<h2 id="1-a-Parsing-Lexical-Analysis"><a href="#1-a-Parsing-Lexical-Analysis" class="headerlink" title="1-a Parsing: Lexical Analysis"></a>1-a Parsing: Lexical Analysis</h2><p>Lisp 的語法相當簡單，而且我們沒有要實作所有的語法 XD</p>
+<p>目前看到的就是分成三種：Letters、Numbers，跟 Paranthesis。</p>
+<blockquote>
+<p>會將多餘的空白忽略，因為空白的區隔是為了讓開發者好讀</p>
+</blockquote>
+<p>就以這三個去分，先寫出三個 regular expression 來：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> WHITE_SPACE = <span class="regexp">/[\s]/</span>;</div><div class="line"><span class="keyword">var</span> NUMBERS = <span class="regexp">/[0-9]/</span>;</div><div class="line"><span class="keyword">var</span> LETTERS = <span class="regexp">/[a-z]/i</span>;</div></pre></td></tr></table></figure>
+<p>接著要 iterate 輸入的 raw code：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> current = <span class="number">0</span>;</div><div class="line"><span class="keyword">var</span> tokens = [];</div><div class="line"><span class="keyword">while</span>(current &lt; input.length) &#123;</div><div class="line">    <span class="comment">// Lexical analysis</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>首先第一個就是先略過空白</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (WHITE_SPACE.test(char)) &#123;</div><div class="line">    current += <span class="number">1</span>;</div><div class="line">    <span class="keyword">continue</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再來是括號</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (char === <span class="string">'('</span> || char === <span class="string">')'</span>) &#123;</div><div class="line">    tokens.push(&#123;type: <span class="string">'parenthesis'</span>, value: char&#125;)</div><div class="line">    current += <span class="number">1</span>; </div><div class="line">    <span class="keyword">continue</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最後兩個有點像，分別是 <code>NUMBERS</code> 和 <code>LETTERS</code>：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (NUMBERS.test(char)) &#123;</div><div class="line">    <span class="keyword">var</span> value = <span class="string">''</span>;</div><div class="line">    <span class="keyword">while</span>(NUMBERS.test(char)) &#123;</div><div class="line">        value += char</div><div class="line">        current += <span class="number">1</span>;</div><div class="line">        char = input[current];</div><div class="line">    &#125;</div><div class="line">    tokens.push(&#123;type: <span class="string">'number'</span>, value: value&#125;);</div><div class="line">    <span class="keyword">continue</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">if</span> (LETTERS.test(char)) &#123;</div><div class="line">    <span class="keyword">var</span> value = <span class="string">''</span>;</div><div class="line">    <span class="keyword">while</span>(LETTERS.test(char)) &#123;</div><div class="line">        value += char</div><div class="line">        current += <span class="number">1</span>;</div><div class="line">        char = input[current];</div><div class="line">    &#125;</div><div class="line">    tokens.push(&#123;type: <span class="string">'name'</span>, value: value&#125;);</div><div class="line">    <span class="keyword">continue</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>以數字為例，只要碰到了第一個數字，</p>
+<p>就會接著把剩下遇到連續的數字一起推進去。</p>
+<p>所以這一階段我們會得到一個 tokens：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">[ &#123; type: <span class="string">'parenthesis'</span>, value: <span class="string">'('</span> &#125;,</div><div class="line">  &#123; type: <span class="string">'name'</span>, value: <span class="string">'add'</span> &#125;,</div><div class="line">  &#123; type: <span class="string">'number'</span>, value: <span class="string">'22'</span> &#125;,</div><div class="line">  &#123; type: <span class="string">'parenthesis'</span>, value: <span class="string">'('</span> &#125;,</div><div class="line">  &#123; type: <span class="string">'name'</span>, value: <span class="string">'subtract'</span> &#125;,</div><div class="line">  &#123; type: <span class="string">'number'</span>, value: <span class="string">'43'</span> &#125;,</div><div class="line">  &#123; type: <span class="string">'number'</span>, value: <span class="string">'2'</span> &#125;,</div><div class="line">  &#123; type: <span class="string">'parenthesis'</span>, value: <span class="string">')'</span> &#125; ]</div></pre></td></tr></table></figure>
+<p>最後，如果沒有對應的 type，</p>
+<p>會丟出一個 Type Error：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'I dont know what this character is: '</span> + char);</div></pre></td></tr></table></figure>
+<p>完整的 <code>lexer</code> 在<a href="https://github.com/abalone0204/super-tiny-compiler-practice/blob/master/super-tiny-compiler.js#L1:L56" target="_blank" rel="external">這裡</a>可以看到</p>
+<blockquote>
+<p>為了方便寫成文章，所以做了一些改寫 XD</p>
+<p>順序也有所調動。</p>
+<p>畢竟原本是在半小時內要講完的事情，</p>
+<p>原作者 James Kyle 也樂見有更多人對 Compiler 有興趣，</p>
+<p>詳細情形見最下方 License，請不要擔心。</p>
+</blockquote>
+<h2 id="1-b-Parsing-Syntatic-Analysis"><a href="#1-b-Parsing-Syntatic-Analysis" class="headerlink" title="1-b. Parsing: Syntatic Analysis"></a>1-b. Parsing: Syntatic Analysis</h2><p>這一階段的任務就是把 tokens 轉成 <strong>AST</strong>。</p>
+<p>這裡應該是最容易卡關的部分 XD，</p>
+<p>不過讓我們慢慢來，並感受一下為什麼要這樣做。</p>
+<p>這裡會運用到遞迴，減少各種迴圈，大大減低了 code 的數量，</p>
+<p>也提高了可讀性，而且看起來還很帥。</p>
+<p>有句話說得好：</p>
+<blockquote>
+<p>「嫩嫩迴圈，大大遞迴。」</p>
+</blockquote>
+<p>只要能遞迴，就一定要遞迴一下。</p>
+<p>來看一下 parser 的結構是怎麼樣：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">parser</span>(<span class="params">tokens</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> current = <span class="number">0</span>;</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">walk</span>(<span class="params"></span>) </span>&#123;</div><div class="line">        <span class="comment">// Walk</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">var</span> ast = &#123;</div><div class="line">        type: <span class="string">'Program'</span>,</div><div class="line">        body: []</div><div class="line">    &#125;;</div><div class="line">    <span class="keyword">while</span> (current &lt; tokens.length) &#123;</div><div class="line">        ast.body.push(walk());</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> ast;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到我們這裡還是會移動 current 來遍歷每個 token，</p>
+<p>只是改成呼叫 <code>walk</code>函數，利用 JavaScript closure 的特性，</p>
+<p>呼叫並且更改 current。</p>
+<blockquote>
+<p>如果對 closure 和 funcitonal programming with js有興趣，</p>
+<p>可以參考一下這篇文章：</p>
+<p><a href="https://medium.com/javascript-scene/the-two-pillars-of-javascript-pt-2-functional-programming-a63aa53a41a4#.ggszw4hmu" target="_blank" rel="external">The Two Pillars of JavaScript — Pt 2: Functional Programming</a></p>
+</blockquote>
+<p>來看看 <code>walk</code>：</p>
+<p>首先當然是先拿到 token：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">walk</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> token = tokens[current];</div><div class="line">    <span class="comment">// get token</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>先看一下比較單純的遇到數字該怎麼辦（以下幾個 type 的確認都在 walk 裡完成）：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (token.type === <span class="string">'number'</span>) &#123;</div><div class="line">    current += <span class="number">1</span>;</div><div class="line">    <span class="keyword">return</span> &#123;</div><div class="line">        type: <span class="string">'NumberLiteral'</span>,</div><div class="line">        value: token.value</div><div class="line">    &#125;;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再來是如果遇到 <code>(</code> 該做什麼事，</p>
+<p>直接看一整段太長了，所以我將它拆成兩半：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (token.type === <span class="string">'parenthesis'</span>) &#123;</div><div class="line">    <span class="keyword">if</span> (token.value === <span class="string">'('</span>) &#123;</div><div class="line">        </div><div class="line">        current += <span class="number">1</span>;</div><div class="line">        token = tokens[current];</div><div class="line"></div><div class="line">        <span class="keyword">var</span> node = &#123;</div><div class="line">            type: <span class="string">'CallExpression'</span>,</div><div class="line">            name: token.value,</div><div class="line">            params: []</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        current += <span class="number">1</span>;</div><div class="line">        token = tokens[current];</div><div class="line">        <span class="comment">// To be continued with part 2</span></div><div class="line">        </div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>往後移一個，拿到下一個 token ，按照 lisp 的語法，</p>
+<p>這裡會是一個 expression 的名字（可以想成 function name）。</p>
+<p>建立一個 node object，params 裡面放的就是這個 expression 吃的參數。</p>
+<p>再來繼續往下看下個 token，</p>
+<p>這裡會比較困難一點點：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (token.type === <span class="string">'parenthesis'</span>) &#123;</div><div class="line">    <span class="keyword">if</span> (token.value === <span class="string">'('</span>) &#123;</div><div class="line">        <span class="comment">// ....</span></div><div class="line">        <span class="comment">// 接續前面 part 1</span></div><div class="line">        <span class="keyword">while</span> (</div><div class="line">            (token.type !== <span class="string">'parenthesis'</span>) ||</div><div class="line">            (token.type === <span class="string">'parenthesis'</span> &amp;&amp; token.value !== <span class="string">')'</span>)</div><div class="line">        ) &#123;</div><div class="line">            node.params.push(walk());</div><div class="line">            token = tokens[current];</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        current += <span class="number">1</span>;</div><div class="line"></div><div class="line"></div><div class="line">        <span class="keyword">return</span> node;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>假如不是 <code>)</code> 的話，就會繼續往下走，</p>
+<p>因為expression 中可能還是會有 expression：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(add (add 2 1) (subtract 1 2))</div></pre></td></tr></table></figure>
+<p>所以假如遇到 <code>(</code>，就會在執行一次 walk，</p>
+<p>前面已經知道 walk 的功用就是解析一個expression，</p>
+<p>要解析一個 expression 中的 expression 的方法，</p>
+<p>那就在 <code>walk</code> 裡面再 call 一次 <code>walk</code> 就好了，</p>
+<p>我想可以人體 compile 一下上面的那行 lisp，</p>
+<p>會更理解這個概念。</p>
+<p>最後在 walk 函數的最後，一樣加上 type error 的 handling</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(token.type);</div></pre></td></tr></table></figure>
+<p>實作完 <code>walk</code> 函數以後，要建出 AST 就簡單多了</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">parser</span>(<span class="params">tokens</span>) </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">walk</span>(<span class="params"></span>) </span>&#123;</div><div class="line">        <span class="comment">// plz ref to source code</span></div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="keyword">var</span> ast = &#123;</div><div class="line">        type: <span class="string">'Program'</span>,</div><div class="line">        body: []</div><div class="line">    &#125;;</div><div class="line"></div><div class="line">    <span class="keyword">while</span> (current &lt; tokens.length) &#123;</div><div class="line">        ast.body.push(walk());</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> ast;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>語法盡量寫的非常淺顯易懂，除了講解容易之外</p>
+<p>在很難設中斷點的 js 裡，寫太聰明的 code 只是在搞自己而已。</p>
+<p>這裡一樣附上完整的原碼: <a href="https://github.com/abalone0204/super-tiny-compiler-practice/blob/master/super-tiny-compiler.js#L58:L116" target="_blank" rel="external">parser</a></p>
+<h1 id="2-Transformation"><a href="#2-Transformation" class="headerlink" title="2. Transformation"></a>2. Transformation</h1><p>這一階段的目標是要將 AST 轉成專為生成 JavaScript 而生的 <code>nextAST</code>，</p>
+<p>我認為稍微抽象一點的應該就是 Traverser 的部份，</p>
+<p>不過如果你有遍歷各種樹的概念，那以下應該會是非常簡單的事情。</p>
+<p>這裡要分成兩個函數來實作：</p>
+<ul>
+<li><p>Traverser：去遍歷我們前面造出來的 AST，並執行我們想要執行在每個節點上的 function</p>
+</li>
+<li><p>Transformer：利用前面做出來的 Traverser 轉化成專為 JavaScript 而生的 <code>nextAst</code></p>
+</li>
+</ul>
+<p>為了更清楚知道我們在做什麼，先看一下 transform 的結果：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * ----------------------------------------------------------------------------</div><div class="line"> *   Original AST                     |   Transformed AST</div><div class="line"> * ----------------------------------------------------------------------------</div><div class="line"> *   &#123;                                |   &#123;</div><div class="line"> *     type: 'Program',               |     type: 'Program',</div><div class="line"> *     body: [&#123;                       |     body: [&#123;</div><div class="line"> *       type: 'CallExpression',      |       type: 'ExpressionStatement',</div><div class="line"> *       name: 'add',                 |       expression: &#123;</div><div class="line"> *       params: [&#123;                   |         type: 'CallExpression',</div><div class="line"> *         type: 'NumberLiteral',     |         callee: &#123;</div><div class="line"> *         value: '22'                 |           type: 'Identifier',</div><div class="line"> *       &#125;, &#123;                         |           name: 'add'</div><div class="line"> *         type: 'CallExpression',    |         &#125;,</div><div class="line"> *         name: 'subtract',          |         arguments: [&#123;</div><div class="line"> *         params: [&#123;                 |           type: 'NumberLiteral',</div><div class="line"> *           type: 'NumberLiteral',   |           value: '22'</div><div class="line"> *           value: '43'               |         &#125;, &#123;</div><div class="line"> *         &#125;, &#123;                       |           type: 'CallExpression',</div><div class="line"> *           type: 'NumberLiteral',   |           callee: &#123;</div><div class="line"> *           value: '2'               |             type: 'Identifier',</div><div class="line"> *         &#125;]                         |             name: 'subtract'</div><div class="line"> *       &#125;]                           |           &#125;,</div><div class="line"> *     &#125;]                             |           arguments: [&#123;</div><div class="line"> *   &#125;                                |             type: 'NumberLiteral',</div><div class="line"> *                                    |             value: '43'</div><div class="line"> * ---------------------------------- |           &#125;, &#123;</div><div class="line"> *                                    |             type: 'NumberLiteral',</div><div class="line"> *                                    |             value: '2'</div><div class="line"> *                                    |           &#125;]</div><div class="line"> *  (sorry the other one is longer.)  |         &#125;]</div><div class="line"> *                                    |       &#125;</div><div class="line"> *                                    |     &#125;]</div><div class="line"> *                                    |   &#125;</div><div class="line"> * ----------------------------------------------------------------------------</div><div class="line"> */</div></pre></td></tr></table></figure>
+<h2 id="2-a-Traverser"><a href="#2-a-Traverser" class="headerlink" title="2-a. Traverser"></a>2-a. Traverser</h2><p>為了要遍歷我們的 AST，</p>
+<p>我們要先寫一個 helper function 來 traverse 每一個 token 的節點。</p>
+<p>以下一樣把 traverser 分成兩部分來看，</p>
+<p>現在先只要專注在最上方的 <code>traverseArray</code> 就行了：</p>
+<p>traverseArray會做的事情就是對每個子節點執行 traverseNode。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">traverser</span>(<span class="params">ast, visitor</span>) </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">traverseArray</span>(<span class="params">array, parent</span>) </span>&#123;</div><div class="line">        array.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">child</span>) </span>&#123;</div><div class="line">          traverseNode(child, parent);</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">traverseNode</span>(<span class="params">node, parent</span>) </span>&#123;</div><div class="line">        <span class="comment">// to be continued</span></div><div class="line">    &#125;</div><div class="line">    traverseNode(ast, <span class="literal">null</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>traverser 裡面的 <code>visitor</code>，</p>
+<p>面放著我們<strong>「拜訪」</strong>每個節點時要執行的方法，</p>
+<p>Transform 的工作就是由 visitor 完成的，這裡先不要急，</p>
+<p>到 <code>transform</code>這個函數時就會看到 visitor 是如何作用的。</p>
+</blockquote>
+<p>首先我們根據子節點的 type 呼叫對應執行的 method，</p>
+<p>找到的話執行它，待會一再對子節點要執行的就是這一部份：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">traverser</span>(<span class="params">ast, visitor</span>) </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">traverseArray</span>(<span class="params">array, parent</span>) </span>&#123;</div><div class="line">        array.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">child</span>) </span>&#123;</div><div class="line">          traverseNode(child, parent);</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">traverseNode</span>(<span class="params">node, parent</span>) </span>&#123;</div><div class="line">        <span class="keyword">var</span> method = visitor[node.type];</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (method) &#123;</div><div class="line">            method(node, parent);</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// to be continued</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    traverseNode(ast, <span class="literal">null</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接著再根據子節點的 type，去執行 <code>traverseArray</code>，</p>
+<p>Program 的子節點是 <code>body</code>，</p>
+<p>CallExpression 的事 <code>params</code>，</p>
+<p>而單純的 NumberLiteral 則沒有子節點需要被遍歷。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">traverser</span>(<span class="params">ast, visitor</span>) </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">traverseArray</span>(<span class="params">array, parent</span>) </span>&#123;</div><div class="line">        array.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">child</span>) </span>&#123;</div><div class="line">          traverseNode(child, parent);</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">traverseNode</span>(<span class="params">node, parent</span>) </span>&#123;</div><div class="line">        <span class="keyword">var</span> method = visitor[node.type];</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (method) &#123;</div><div class="line">            method(node, parent);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">switch</span>(node.type) &#123;</div><div class="line">            <span class="keyword">case</span> <span class="string">'Program'</span>:</div><div class="line">                traverseArray(node.body, node);</div><div class="line">                <span class="keyword">break</span>;</div><div class="line">            <span class="keyword">case</span> <span class="string">'CallExpression'</span>:</div><div class="line">                traverseArray(node.params, node);</div><div class="line">                <span class="keyword">break</span>;</div><div class="line">            <span class="keyword">case</span> <span class="string">'NumberLiteral'</span>:</div><div class="line">                <span class="keyword">break</span>;</div><div class="line">            <span class="keyword">default</span>:</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(node.type);</div><div class="line">        &#125;        </div><div class="line">    &#125;</div><div class="line"></div><div class="line">    traverseNode(ast, <span class="literal">null</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li><a href="https://github.com/abalone0204/super-tiny-compiler-practice/blob/master/super-tiny-compiler.js#L118:L148" target="_blank" rel="external">traverser source code</a></li>
+</ul>
+<h2 id="2-b-Transformer"><a href="#2-b-Transformer" class="headerlink" title="2-b. Transformer"></a>2-b. Transformer</h2><p>再來則是重頭戲： <code>transformer</code>，</p>
+<p><code>transformer</code>是個相當 powerful 的概念，</p>
+<p><del>至少在麥考貝拍爛它之前都是</del>。</p>
+<p>將我們一路 parse 過來的東西，轉成跟目標語言非常相近的 <strong>AST</strong>。</p>
+<p>首先先造出一個新的 <code>nextAst</code>：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">transformer</span>(<span class="params">ast</span>) </span>&#123;</div><div class="line">    <span class="comment">// init</span></div><div class="line">    <span class="keyword">var</span> nextAst = &#123;</div><div class="line">        type: <span class="string">'Program'</span>,</div><div class="line">        body: []</div><div class="line">    &#125;;</div><div class="line">    <span class="comment">// To be continued</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再來這裡是有點 tricky 的部份，</p>
+<p>我們對 ast 底下增加了一個隱藏的屬性：<code>_context</code>，</p>
+<p>下面我們對子節點的操作也會常常用到這個非常 naive 的方法。</p>
+<blockquote>
+<p>其實只是在名字前面加上底線，並不是真正的隱藏</p>
+</blockquote>
+<p>再來則是前面有提的的 <code>visitor</code>，</p>
+<p>這裡就能夠看出為什麼選擇 Lisp 了，</p>
+<p>語法非常的簡單且直觀，</p>
+<p>但 <code>transformer</code>仍然是一個相較之下較為複雜的函數：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">transformer</span>(<span class="params">ast</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> nextAst = &#123;</div><div class="line">        type: <span class="string">'Program'</span>,</div><div class="line">        body: []</div><div class="line">    &#125;;</div><div class="line"></div><div class="line">    ast._context = nextAst.body;</div><div class="line"></div><div class="line">    <span class="keyword">var</span> visitor = &#123;</div><div class="line">        NumberLiteral: <span class="function"><span class="keyword">function</span> (<span class="params">node, parent</span>) </span>&#123;</div><div class="line">            parent._context.push(&#123;</div><div class="line">                type: <span class="string">'NumberLiteral'</span>,</div><div class="line">                value: node.value</div><div class="line">            &#125;);</div><div class="line">        &#125;,</div><div class="line">        CallExpression: <span class="function"><span class="keyword">function</span> (<span class="params">node, parent</span>) </span>&#123;</div><div class="line">            <span class="comment">// to be continued</span></div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    traverser(ast, visitor)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>NumberLiteral</code> 這個 method，做的事情並不難，</p>
+<p>只是 push 一個節點到父節點的 <code>_context</code> 中而已。</p>
+<p>假如今天我們的程式什麼都沒有，只有一個單純的數字：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">2</div></pre></td></tr></table></figure>
+<p>那 transfomer 會造出來的<code>nextAst</code>就是這樣</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    type: <span class="string">'Program'</span></div><div class="line">    body: [&#123;type: <span class="string">'NumberLiteral'</span>, value: <span class="string">'2'</span>&#125;]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>跟前面的 ast 幾乎是沒有差的。</p>
+<p>接著看如果遇到 function call 時要怎麼做，</p>
+<p>為了簡潔我省略了其他部分的 code。</p>
+<p>我們同樣先造出一個 expression 的 object，</p>
+<p>包含一個 callee 屬性。</p>
+<blockquote>
+<p>callee 就是被呼叫的 function</p>
+<p><code>(add 2 3)</code> 中，被呼叫的就是 <code>add</code> 這個 expression</p>
+</blockquote>
+<p>再來同樣在這個節點建立一個 <code>_context</code>，</p>
+<p>並將其指到我們剛剛剛創造的 <code>expression</code>，</p>
+<p>以下是 <code>CallExpression</code> 這個 method 的 上半部：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">transformer</span>(<span class="params">ast</span>) </span>&#123;</div><div class="line">    <span class="comment">// pass</span></div><div class="line">    <span class="keyword">var</span> visitor = &#123;</div><div class="line">        <span class="comment">// pass</span></div><div class="line">        CallExpression: <span class="function"><span class="keyword">function</span> (<span class="params">node, parent</span>) </span>&#123;</div><div class="line">            <span class="keyword">var</span> expression = &#123;</div><div class="line">                type: <span class="string">'CallExpression'</span>,</div><div class="line">                callee: &#123;</div><div class="line">                    type: <span class="string">'Itentifier'</span>,</div><div class="line">                    name: node.name</div><div class="line">                &#125;,</div><div class="line">                <span class="built_in">arguments</span>: []</div><div class="line">            &#125;;</div><div class="line"></div><div class="line">            node._context = expression.arguments;</div><div class="line">            <span class="comment">// pass</span></div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    traverser(ast, visitor)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再來則是跟 JavaScript 比較相關的部份，</p>
+<p>因為 JavaScript 最上層的 Call Expression 其實是 statement，</p>
+<p>所以在確定該個 expression 的父節點 type 不是 <code>CallExpression</code> 時，</p>
+<p>要再多加一層 <code>ExpressionStatement</code>。</p>
+<blockquote>
+<p>Statement 就是敘述句，像是 <code>var i = 0</code>；</p>
+<p>Expression 則是會產生值的，像是<code>yo()</code>。</p>
+<p>但你知道的，有些 Statement 的地方我們仍然可以產生值，</p>
+<p>因此也就有了 <code>Expression Statement</code> 的存在。</p>
+<p>如此概括是有點草率，不過這裡還是將重點放在我們的 Compiler 上。</p>
+<p>關於 Expression 和 Statement 在下方補充資料有放上一篇我覺得既短小又很不錯的文章！</p>
+</blockquote>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">transformer</span>(<span class="params">ast</span>) </span>&#123;</div><div class="line">    <span class="comment">// pass</span></div><div class="line">    <span class="keyword">var</span> visitor = &#123;</div><div class="line">        <span class="comment">// pass</span></div><div class="line">        CallExpression: <span class="function"><span class="keyword">function</span> (<span class="params">node, parent</span>) </span>&#123;</div><div class="line">            <span class="keyword">var</span> expression = &#123;</div><div class="line">                type: <span class="string">'CallExpression'</span>,</div><div class="line">                callee: &#123;</div><div class="line">                    type: <span class="string">'Itentifier'</span>,</div><div class="line">                    name: node.name</div><div class="line">                &#125;,</div><div class="line">                <span class="built_in">arguments</span>: []</div><div class="line">            &#125;;</div><div class="line"></div><div class="line">            node._context = expression.arguments;</div><div class="line">            <span class="keyword">if</span> (parent.type !== <span class="string">'CallExpression'</span>) &#123;</div><div class="line">                expression = &#123;</div><div class="line">                      type: <span class="string">'ExpressionStatement'</span>,</div><div class="line">                      expression: expression</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            parent._context.push(expression);</div><div class="line"></div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    traverser(ast, visitor)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>於是我們就完成了 <code>transformer</code> 了！</p>
+<p>下一階段就是根據這個 <code>nextAst</code> 來生成 code 了。</p>
+<p>一樣附上 <code>transformer</code> 的 <a href="https://github.com/abalone0204/super-tiny-compiler-practice/blob/master/super-tiny-compiler.js#L150:L192" target="_blank" rel="external">code</a></p>
+<h1 id="3-Code-Generator"><a href="#3-Code-Generator" class="headerlink" title="3. Code Generator"></a>3. Code Generator</h1><p>終於到最後啦！</p>
+<p>其實有了前一段專為 JavaScript 生成的 <code>nextAst</code>之後，</p>
+<p>要生成 JavaScript 真的是毫不費力。</p>
+<p>直接來看 <code>codeGenerator</code> 這個函數，</p>
+<ul>
+<li><p><code>Program</code>: 用換行來區分各個小 Program。</p>
+</li>
+<li><p><code>Expression</code>:再來是在每個 Expression 後面加上 <code>;</code>。</p>
+</li>
+<li><p><code>CallExpression</code>: </p>
+<ul>
+<li><code>callee</code> 就是被呼叫的函數，</li>
+<li><code>arguments</code> 則會被逗號分開來，如果 argument 是 expression 的話會繼續遞迴的呼叫 <code>codeGenerator</code></li>
+</ul>
+</li>
+<li><p><code>Identifier</code>: expression （函數）的的名稱。</p>
+</li>
+<li><p><code>NumberLiteral</code>: 毫無反應，就是個數字。</p>
+</li>
+<li><p>最後則是不包含以上 type 的 node，就會丟出 type error。<del>真的是非常 robust。</del></p>
+</li>
+</ul>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">codeGenerator</span>(<span class="params">node</span>) </span>&#123;</div><div class="line">    <span class="keyword">switch</span>(node.type) &#123;</div><div class="line">        <span class="keyword">case</span> <span class="string">'Program'</span>:</div><div class="line">            <span class="keyword">return</span> node.body.map(codeGenerator)</div><div class="line">                .join(<span class="string">'\n'</span>);</div><div class="line">        <span class="keyword">case</span> <span class="string">'ExpressionStatement'</span>:</div><div class="line">            <span class="keyword">return</span> (</div><div class="line">                codeGenerator(node.expression) + <span class="string">';'</span></div><div class="line">                )</div><div class="line">        <span class="keyword">case</span> <span class="string">'CallExpression'</span>:</div><div class="line">            <span class="keyword">return</span> (</div><div class="line">                codeGenerator(node.callee)+</div><div class="line">                <span class="string">'('</span>+</div><div class="line">                node.arguments.map(codeGenerator).join(<span class="string">', '</span>)+</div><div class="line">                <span class="string">')'</span> </div><div class="line">            );</div><div class="line">        <span class="keyword">case</span> <span class="string">'Identifier'</span>:</div><div class="line">            <span class="keyword">return</span> node.name;</div><div class="line">        <span class="keyword">case</span> <span class="string">'NumberLiteral'</span>:</div><div class="line">            <span class="keyword">return</span> node.value;</div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(node.type);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li><a href="https://github.com/abalone0204/super-tiny-compiler-practice/blob/master/super-tiny-compiler.js#L194:L217" target="_blank" rel="external">source</a></li>
+</ul>
+<h1 id="Super-Tiny-Compiler"><a href="#Super-Tiny-Compiler" class="headerlink" title="Super Tiny Compiler"></a>Super Tiny Compiler</h1><p>將以上的 function 組合起來，</p>
+<p>就是一個 compiler 了：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">compiler</span>(<span class="params">input</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> tokens = lexer(input);</div><div class="line">    <span class="keyword">var</span> ast = parser(tokens);</div><div class="line">    <span class="keyword">var</span> nextAst = transformer(ast);</div><div class="line">    <span class="keyword">var</span> output = codeGenerator(nextAst);</div><div class="line">    <span class="keyword">return</span> output;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="後記"><a href="#後記" class="headerlink" title="後記"></a>後記</h1><p>很多時候我們都會覺得有好用的工具，</p>
+<p>幹麻要自己造輪子呢？</p>
+<p>但在造輪子的過程中，我們獲得的往往更多，</p>
+<p>畢竟盲目的 call api 和使用 library 並不能體現一個軟體工作者的價值，</p>
+<p>懂得何時該使用，甚至創造工具才是我們的天職所在。</p>
+<p>能掌握更多知識，就能設計出更有創意的東西，</p>
+<p>因為我們更了解所謂的「極限」在哪裡。</p>
+<p>雖然只是一個「簡單的」from lisp to js compiler，</p>
+<p>但相較於過度困難的屠龍本而言，</p>
+<p>我想這是一個能相對友善了解 compiler 的起點。</p>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><ul>
+<li><p>可以到我的 repo 去看：<a href="https://github.com/abalone0204/super-tiny-compiler-practice" target="_blank" rel="external">Super tiny compiler practice</a>，也可以看下方原作的XD 有些微妙的不同</p>
+</li>
+<li><p><a href="https://github.com/thejameskyle/the-super-tiny-compiler" target="_blank" rel="external">Super tiny compiler</a></p>
+</li>
+<li><p><a href="https://medium.com/javascript-scene/the-two-pillars-of-javascript-pt-2-functional-programming-a63aa53a41a4#.ggszw4hmu" target="_blank" rel="external">The Two Pillars of JavaScript — Pt 2: Functional Programming</a></p>
+</li>
+<li><p><a href="http://www.2ality.com/2012/09/expressions-vs-statements.html" target="_blank" rel="external">Expressions versus statements in JavaScript</a></p>
+</li>
+</ul>
+<h1 id="License"><a href="#License" class="headerlink" title="License"></a>License</h1><ul>
+<li><a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="external">licensed through Creative Commons</a></li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/05/08/es6-generator-func/" class="prev">PREV</a><a href="/2016/04/25/migrate-to-hexo/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/04/25/Super-tiny-compiler/';
+var disqus_title = 'Super tiny compiler';
+var disqus_url = 'http://abalone0204.github.com/2016/04/25/Super-tiny-compiler/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

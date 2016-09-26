@@ -1,0 +1,200 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 淺入淺出 Generator Function · De-bug: 一鍵跑版</title><meta name="description" content="淺入淺出 Generator Function - Tsung-Chen Ku"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">淺入淺出 Generator Function</h1><div class="post-time">May 8, 2016</div><div class="post-content"><p>es 2015 中有一項新的 feature 叫做 <strong>generator function</strong>，</p>
+<p>假如熟稔其他語言的人，</p>
+<p>可能都知道 generator function 是什麼，</p>
+<p>不過對於一位平常都在寫原生 JavaScript 的人，這就很新鮮了。</p>
+<blockquote>
+<p>當然，generator 就算在 es 裡面也不算是什麼太新鮮的東西。<br>畢竟跟 JavaScript 有關的東西大概超過一個月就算舊的了</p>
+</blockquote>
+<p>使用 Generator function 並不是一件求新求潮的一件事情，</p>
+<p>活用 Generator function 能讓測試以及開發非同步的程式碼都變得更直觀。</p>
+<p>這篇文章就來淺淺的介紹一下 Generator function 究竟是什麼。</p>
+<a id="more"></a>
+<p>之所以是<strong>淺淺的介紹</strong>是因為，</p>
+<p>我認為深入介紹太多不同的特性，</p>
+<p>沒有搭配實際的應用，</p>
+<p>那其實只是一篇寫的比較詳細的 document，</p>
+<p>所以這篇只打算介紹到「可以用」的程度而已。</p>
+<p><img src="http://www.rumproast.com/images/uploads/shallow_end_thumb.jpg" alt="shallow"></p>
+<p>這篇文章的圖片就是在提醒你這是一篇淺淺的文章，</p>
+<p>讓我們慢慢跳進去，才不會一開始就把頭撞爛。</p>
+<blockquote>
+<p>其實本來是要寫關於<code>redux-saga</code>的，<br>只是不先介紹 generator 真的講不下去 Q_Q</p>
+</blockquote>
+<p>這篇會包含以下幾個主題：</p>
+<ul>
+<li><p><a href="#Generator-function-是什麼">Generator function 是什麼</a></p>
+</li>
+<li><p><a href="#Syntax">Syntax</a></p>
+<ul>
+<li><p><a href="#宣告一個-generator-function">宣告一個 Generator function</a></p>
+</li>
+<li><p><a href="#yield"><code>yield</code></a></p>
+</li>
+<li><p><a href="#next"><code>next</code></a></p>
+</li>
+<li><p><a href="#在-next-中傳入參數">在 <code>next</code> 中傳入參數</a></p>
+</li>
+<li><p><a href="#for-of"><code>for...of</code></a></p>
+</li>
+<li><p><a href="#Error-handling-Optional">Error handling(optional)</a></p>
+</li>
+<li><p><a href="#Delegating-Generators-Generator-中的-generator-optional">Delegating Generators - Generator 中的 generator (optional)</a></p>
+</li>
+</ul>
+</li>
+<li><p><a href="#如何啟用-Generator-function">如何啟用 Generator function</a></p>
+</li>
+<li><p><a href="#實際上的應用">實際上的應用</a></p>
+</li>
+</ul>
+<hr>
+<h1 id="Generator-function-是什麼"><a href="#Generator-function-是什麼" class="headerlink" title="Generator function 是什麼"></a>Generator function 是什麼</h1><p>先來講講我們熟悉的 function：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;=<span class="number">1E10</span>; i++) &#123;</div><div class="line">        <span class="built_in">console</span>.log(i);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"><span class="comment">// 0, 1, 2.... 1E10</span></div></pre></td></tr></table></figure>
+<p>是個 run-to-completion 的 function，</p>
+<p>一旦進去了，就會一直執行到結束，</p>
+<p>看上述的 code 就知道這個東西會執行的非常非常久，</p>
+<p>因為它一旦進入，就要執行到被完成為止。</p>
+<p>generator function 特別的地方就是它可以被暫停，</p>
+<p>等到下次進來時再繼續呼叫它。</p>
+<p>先看下方這個改寫過後的小例子：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">generatorFoo</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;=<span class="number">1E10</span>; i++) &#123;</div><div class="line">        <span class="built_in">console</span>.log(i)</div><div class="line">        <span class="keyword">yield</span> i</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">const</span> iterator = generatorFoo()</div><div class="line"></div><div class="line">iterator.next() <span class="comment">// 0</span></div><div class="line">iterator.next() <span class="comment">// 1</span></div><div class="line">iterator.next() <span class="comment">// 2</span></div></pre></td></tr></table></figure>
+<p>可能會有點不熟悉這樣的語法，</p>
+<p>不過可以先感受一下一次拿一個值出來，</p>
+<p>以及可以被暫停的 function 是長什麼樣子。</p>
+<p>下面來更清楚地敘述一下 generator function 的語法。</p>
+<h1 id="Syntax"><a href="#Syntax" class="headerlink" title="Syntax"></a>Syntax</h1><h2 id="宣告一個-generator-function"><a href="#宣告一個-generator-function" class="headerlink" title="宣告一個 generator function"></a>宣告一個 generator function</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">generatorFoo</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="comment">// ...</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>function</code> 後面或多個 <code>*</code>。</p>
+<blockquote>
+<p>有人會爭論到底是要放在 function 關鍵字後面，<br>還是直接放在 function 名字前面<br>e.q: <code>function *generatorFoo</code><br>兩個都是合格的語法，<br>不過我習慣放在 <code>function</code> 關鍵字後面，<br>我認為這是個不同的 <code>function</code>，<br>而且 function name 本身並不該包含 <code>*</code><br>至於參考資料裡面有附上 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*" target="_blank" rel="external">MDN 中對於 generator function 的語法介紹</a>，<br>也將 <code>*</code> 放在緊接著 <code>function</code> 關鍵字的後方。<br>這一部份還沒做過更全面的研究，<br>畢竟最近也才在實作中加入 generator function 而已</p>
+</blockquote>
+<h2 id="yield"><a href="#yield" class="headerlink" title="yield"></a><code>yield</code></h2><p>這個關鍵字估計就是 generator 中最特別的概念了，</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">generatorFoo</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;=<span class="number">1E10</span>; i++) &#123;</div><div class="line">        <span class="built_in">console</span>.log(i)</div><div class="line">        <span class="keyword">yield</span> i</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>當我們呼叫 <code>generatorFoo</code> 時，</p>
+<p>會得到一個 iterator，</p>
+<p>當我們每次呼叫這個 iterator 的 <code>next</code> 方法時，</p>
+<p>就會執行 <code>generatorFoo</code>，一直到出現 <code>yield</code> 關鍵字的地方，</p>
+<p>接下來會暫停，直到下次呼叫 <code>next</code>。</p>
+<blockquote>
+<p>我知道還有 <code>yield*</code>，不過這個概念等後面再說</p>
+</blockquote>
+<h2 id="next"><a href="#next" class="headerlink" title="next"></a><code>next</code></h2><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> iterator = generatorFoo()</div><div class="line"></div><div class="line">iterator.next() <span class="comment">// 0</span></div></pre></td></tr></table></figure>
+<p>像以上的例子，第一次呼叫 <code>next</code> 時，</p>
+<p>就會執行到 <code>yield i</code> 這個位置，接著暫停這個函數，</p>
+<p>直到下次執行<code>next</code>。</p>
+<ul>
+<li><code>next()</code> 返回什麼？</li>
+</ul>
+<p><code>next</code> function 會返回一個物件，裡面包含著兩個 properties，</p>
+<p>分別是 <code>value</code> 和 <code>done</code>：</p>
+<p><code>value</code>，就是我們在前一段中從 <code>yield</code> 那個位置，</p>
+<p>接到的「值」。</p>
+<p><code>done</code> 是個 boolean 值，</p>
+<p>假如這個 generator function 完全被執行完的話，</p>
+<p><code>done</code>就會變成 <code>true</code>，反之亦然。</p>
+<p>這裡要注意的是當執行到最後一個 <code>yield</code> 時，</p>
+<p><code>done</code> 仍然會是 <code>false</code>，</p>
+<p>再執行一次才會得到 <code>done</code> 為 <code>true</code> 的結果。</p>
+<p>而 generator function 仍然是一個 function，</p>
+<p>我們可以在裡面 <code>return</code> 東西，</p>
+<p>如此在執行到 <code>return</code> 這一行時，</p>
+<p><code>next</code> 就會返回 <code>value</code> 為 <code>return</code>的東西，</p>
+<p>並且 <code>done</code> 為 <code>true</code>。</p>
+<blockquote>
+<p><strong>提醒</strong>：<br>如果你真的需要 return，那你很可能只需要普通的 function 就足夠<br>在 generator function 裡面 return 東西，<br>容易令人感到困惑，簡言之，沒事別這樣做。</p>
+</blockquote>
+<h2 id="在-next-中傳入參數"><a href="#在-next-中傳入參數" class="headerlink" title="在 next 中傳入參數"></a>在 <code>next</code> 中傳入參數</h2><p>我們可以這樣做：<code>next(x)</code> ，</p>
+<p>這樣做的結果就是將<code>x</code>塞入前一個 <code>yield</code> 產生的地方。</p>
+<p>直接看例子會更有感覺</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// source from:  https://davidwalsh.name/es6-generators</span></div><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">foo</span>(<span class="params">x</span>) </span>&#123;</div><div class="line">    <span class="keyword">const</span> y = <span class="number">2</span> * (<span class="keyword">yield</span> (x + <span class="number">1</span>));</div><div class="line">    <span class="keyword">const</span> z = <span class="keyword">yield</span> (y / <span class="number">3</span>);</div><div class="line">    <span class="keyword">return</span> (x + y + z);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">const</span> iterator = foo(<span class="number">5</span>);</div><div class="line"></div><div class="line"><span class="built_in">console</span>.log(iterator.next());       <span class="comment">// &#123; value:6, done:false &#125;</span></div><div class="line"><span class="built_in">console</span>.log( iterator.next( <span class="number">12</span> ) );   <span class="comment">// &#123; value:8, done:false &#125;</span></div><div class="line"><span class="built_in">console</span>.log( iterator.next( <span class="number">13</span> ) );   <span class="comment">// &#123; value:42, done:true &#125;</span></div></pre></td></tr></table></figure>
+<p>第一個 <code>next</code> 不傳入參數是因為在這之前，</p>
+<p>不會有前面一個 <code>yield</code>。</p>
+<p>而第二個 <code>next</code> 中傳入的 <code>12</code>完全替代掉了前面 <code>x+1</code> 的值，</p>
+<p>所以後面的 <code>z</code> 會等於 <code>12*2/3</code>，也就是 <code>8</code>。</p>
+<p>最後一個傳入 <code>13</code>，是替代掉第二個 <code>yield</code> 所產生的值，</p>
+<p>這裡已經可以完全忽略 <code>y/3</code> 是什麼，直接替代成 <code>13</code>了。</p>
+<p>將上述的值全部替代進去會長成下面這樣：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">foo</span>(<span class="params">x</span>) </span>&#123;</div><div class="line">    <span class="keyword">const</span> y = <span class="number">2</span>* (<span class="number">12</span>)</div><div class="line">    <span class="keyword">const</span> z = (<span class="number">13</span>)</div><div class="line">    <span class="keyword">return</span> <span class="number">5</span>+<span class="number">24</span>+<span class="number">13</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>看起來很蠢沒錯，<br>不過這樣替代值的方式也許比直接文字描述來的更直觀一些</p>
+</blockquote>
+<h2 id="for-of"><a href="#for-of" class="headerlink" title="for...of"></a><code>for...of</code></h2><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">yield</span> <span class="number">0</span></div><div class="line">    <span class="keyword">yield</span> <span class="number">1</span></div><div class="line">    <span class="keyword">return</span> <span class="number">2</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我們一樣可以使用 <code>for</code> 來遍歷整個 iterator，</p>
+<p>不過要注意的是，我們只會拿出 <code>done</code>為 <code>false</code> 的值，</p>
+<p>也就是說上述的 <code>2</code> 並不會在 <code>for...of</code> 中被拿到。</p>
+<h2 id="Error-handling-Optional"><a href="#Error-handling-Optional" class="headerlink" title="Error handling (Optional)"></a>Error handling (Optional)</h2><p>雖然說是 optional，</p>
+<p>不過為了在實戰中時寫出更 robust 的程式碼，</p>
+<p>瞭解 error 要如何處理是很重要的，</p>
+<p>畢竟你連丟出來都沒辦法， unit-test 就測不了啦！</p>
+<p>在 generator 中可以用我們熟悉的 try…catch 技法來做到 error handling：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        <span class="keyword">const</span> x = <span class="keyword">yield</span> <span class="number">3</span>;</div><div class="line">        <span class="built_in">console</span>.log( <span class="string">"x: "</span> + x ); <span class="comment">// may never get here!</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">catch</span> (err) &#123;</div><div class="line">        <span class="built_in">console</span>.log( <span class="string">"Error: "</span> + err );</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>不一樣的是我們能在外面直接把 error 丟進去：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> iterator = foo()</div><div class="line">iterator.next() <span class="comment">// x: 3</span></div><div class="line">                <span class="comment">// &#123;value: 3, done: false&#125;</span></div><div class="line">iterator.throw(<span class="string">'error messages'</span>) <span class="comment">// Error: error messages</span></div></pre></td></tr></table></figure>
+<p>這裡有個比較 tricky 的地方是我們把 error 給丟進去後，</p>
+<p>如果在 generator 內部沒有catch 到，</p>
+<p>這個 error 就會丟出來外面被 catch 住：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">foo</span>(<span class="params"></span>) </span>&#123; &#125;</div><div class="line"></div><div class="line"><span class="keyword">const</span> iterator = foo();</div><div class="line"><span class="keyword">try</span> &#123;</div><div class="line">    iterator.throw( <span class="string">"error message"</span> );</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> (err) &#123;</div><div class="line">    <span class="built_in">console</span>.log( <span class="string">"Error: "</span> + err ); <span class="comment">// Error: error message</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="Delegating-Generators-Generator-中的-generator-optional"><a href="#Delegating-Generators-Generator-中的-generator-optional" class="headerlink" title="Delegating Generators - Generator 中的 generator (optional)"></a>Delegating Generators - Generator 中的 generator (optional)</h2><p>我其實不喜歡用 delegate 這個字來解釋，</p>
+<p>總覺得有點在賣弄的感覺 XD。</p>
+<p>簡言之就是將遍歷 generator 的控制權交（delegate=委託）給內層的 generator。</p>
+<p>Talk is cheap, show me the code:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">yield</span> <span class="number">3</span></div><div class="line">    <span class="keyword">yield</span> <span class="number">4</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span>* <span class="title">bar</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">yield</span> <span class="number">1</span></div><div class="line">    <span class="keyword">yield</span> <span class="number">2</span></div><div class="line">    <span class="keyword">yield</span>* foo() <span class="comment">// `yield *` delegates iteration control to `foo()`</span></div><div class="line">    <span class="keyword">yield</span> <span class="number">5</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">for</span> (<span class="keyword">let</span> v <span class="keyword">of</span> bar()) &#123;</div><div class="line">    <span class="built_in">console</span>.log(v)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>執行到 <code>yield* foo()</code> 時，</p>
+<p>就會把控制權交到 <code>foo()</code> 所產生的 iterator 上，</p>
+<p>所以最後那個 <code>for...of</code> 就會印出 1~5 。</p>
+<p>基本上就是這樣而已，我認為了解到這點就已足夠，</p>
+<p>在這裡敘述太多語法卻沒加上實際應用，</p>
+<p>真的只會搞混而已，</p>
+<p>所以請容我到之後應用篇時再繼續說明 delegating 的好處。</p>
+<p>如果現在就想再鑽下去，可以看下方的參考資料。</p>
+<h1 id="如何啟用-Generator-function"><a href="#如何啟用-Generator-function" class="headerlink" title="如何啟用 Generator function"></a>如何啟用 Generator function</h1><p>假如你是使用 webpack 來做前端資源的打包，</p>
+<p>恭喜你，這是一件再簡單不過的事情；</p>
+<p>假如不是的話，你可以：</p>
+<ul>
+<li><p>學會使用 webpack</p>
+</li>
+<li><p>或是想辦法跟 Babel 搭起來</p>
+</li>
+</ul>
+<p>我們這裡會運用 babel 來幫我們非常簡便的在專案中啟用 generator function。</p>
+<blockquote>
+<p><a href="https://babeljs.io/" target="_blank" rel="external">https://babeljs.io/</a></p>
+</blockquote>
+<p>當然，如果要連 webpack 一起介紹會太囉唆，</p>
+<p>以下都假設你已經會實際使用 webpack 的 babel-loader：</p>
+<p>es2015 這個 preset 已經包含了 generator function。</p>
+<p>preset 只幫我們做到 transform 的功能，</p>
+<p>真正要在實際環境中動起來還需要 polyfill 的幫忙：</p>
+<p>所以我們必須要安裝：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">npm install --save-dev babel-preset-es2015</div><div class="line">npm install --save babel-polyfill</div></pre></td></tr></table></figure>
+<p>接著在 <code>.babelrc</code> 中</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  <span class="string">"presets"</span>: [<span class="string">"es2015"</span>, <span class="string">"react"</span>]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最後在你要用到 generator function 的地方加上 <code>import &#39;babel-polyfill&#39;</code>。</p>
+<blockquote>
+<p>其實這裡不一定需要用到整包 polyfil，<br>只要有<code>regeneratorRuntime</code>被定義好就行了<br>有興趣的人可以參考一下 facebook 的 <a href="https://github.com/facebook/regenerator" target="_blank" rel="external">regenerator</a><br>babel-polyfill 裡面也是用到這個 project</p>
+</blockquote>
+<h1 id="實際上的應用"><a href="#實際上的應用" class="headerlink" title="實際上的應用"></a>實際上的應用</h1><p>其實這篇文章主要是系統性的介紹 generator 到底是什麼，</p>
+<p>下篇文章會介紹我們實際在應用時，</p>
+<p>generator 能幫助我們做到什麼。</p>
+<p>如果要一言以蔽之的話，</p>
+<p>那就是：</p>
+<p>「能將非同步的程式碼，用同步的語法來呈現。」</p>
+<p>乍看之下很神奇，</p>
+<p>但在了解 generator function 不過就是個能夠暫停、繼續的 function 後，</p>
+<p>就大概能對他能做到的事有最初步的想像了。</p>
+<h1 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h1><ul>
+<li><p><a href="https://davidwalsh.name/es6-generators" target="_blank" rel="external">The Basics Of ES6 Generators</a></p>
+</li>
+<li><p><a href="https://davidwalsh.name/es6-generators-dive" target="_blank" rel="external">Diving Deeper With ES6 Generators</a></p>
+</li>
+<li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*" target="_blank" rel="external">function*</a></p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/05/14/redux-saga/" class="prev">PREV</a><a href="/2016/04/25/Super-tiny-compiler/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/05/08/es6-generator-func/';
+var disqus_title = '淺入淺出 Generator Function';
+var disqus_url = 'http://abalone0204.github.com/2016/05/08/es6-generator-func/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>

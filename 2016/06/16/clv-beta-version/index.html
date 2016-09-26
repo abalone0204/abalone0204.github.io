@@ -1,0 +1,311 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 寫在 Clairvoyance 發布之後：軟體開發者的社會責任 · De-bug: 一鍵跑版</title><meta name="description" content="寫在 Clairvoyance 發布之後：軟體開發者的社會責任 - Tsung-Chen Ku"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="short icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="stylesheet" href="/css/customize.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" type="text/css"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/abalone0204" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://twitter.com/TinyDenny" target="_blank" class="nav-list-link">TWITTER</a></li><li class="nav-list-item"><a href="https://www.linkedin.com/in/denny-ku-a9a21396?trk=hp-identity-name" target="_blank" class="nav-list-link">LINKEDIN</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><section class="container"><div class="post"><article class="post-block"><h1 class="post-title">寫在 Clairvoyance 發布之後：軟體開發者的社會責任</h1><div class="post-time">Jun 16, 2016</div><div class="post-content"><blockquote>
+<p>這篇可能不會講到太多直接跟技術相關的東西，</p>
+<p>如果你對這個東西怎麼寫出來比較有興趣的話，</p>
+<p>可以看這篇：<a href="http://abalone0204.github.io/2016/06/12/clv-dev-note/" target="_blank" rel="external">Clairvoyance 是怎麼開發的</a></p>
+<p>主要是希望這次從開發到現在較多人使用，</p>
+<p>中間受到許多幫助和指點的經驗，能夠被記錄下來，</p>
+<p>假如以後有人遇到一樣的事情能從中借鏡。</p>
+<p>當然，這也是對自己的一個反省。</p>
+</blockquote>
+<p>首先還是得先講一下求職天～眼通是什麼。</p>
+<p>它其實就是個 chrome 的 extension，</p>
+<p>裝了它以後，能在人力銀行的職缺下方給評論，以及看到其他人給的評論，</p>
+<p>載點在這裡：</p>
+<p><a href="https://chrome.google.com/webstore/detail/clairvoyance-%E6%B1%82%E8%81%B7%E5%A4%A9%E7%9C%BC%E9%80%9A/mdneakdlnoidknagkamfeambdefhppbi?hl=zh-TW&amp;gl=TW" target="_blank" rel="external"><img src="https://raw.githubusercontent.com/abalone0204/Clairvoyance/master/chrome-store-available.png" alt="pic"></a></p>
+<p>其他說明的話 <a href="https://www.ptt.cc/bbs/Soft_Job/M.1465759641.A.E57.html" target="_blank" rel="external">ptt 上的文章</a>會清楚得多。</p>
+<h1 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h1><ul>
+<li><p><a href="#在開始動手寫程式之前">在開始動手寫程式之前</a></p>
+<ul>
+<li>只有這一小段會講到比較多技術相關的</li>
+</ul>
+</li>
+<li><p><a href="#發布-Beta-版本">發布 Beta 版本</a></p>
+</li>
+<li><p><a href="#收到回饋之後">收到回饋之後</a></p>
+</li>
+<li><p><a href="#商業化的迷思以及贊助管道">商業化的迷思以及贊助管道</a></p>
+</li>
+<li><p><a href="#未來方向">未來方向</a></p>
+</li>
+<li><p><a href="#一個軟體工作者的反思">一個軟體工作者的反思</a></p>
+</li>
+</ul>
+<a id="more"></a>
+<p><img src="http://i.imgur.com/QvYeAmN.png" alt="Jean Grey and Cyclops from Entertainment Weekly"></p>
+<blockquote>
+<p>Jean Grey and Cyclops from Entertainment Weekly</p>
+</blockquote>
+<p>求職天～眼通要做的事情很單純，</p>
+<p>就是像前面說的把留言功能加上去而已，</p>
+<p>不過其實就像我們平常在做一件事情一樣，用想的都很簡單。</p>
+<p>但總歸其實只會遇到三個問題：</p>
+<ol>
+<li><p>真正做的時候會遇到問題</p>
+</li>
+<li><p>做出來之後有沒有人用會是一個問題</p>
+</li>
+<li><p>有太多人用之後又會是一個問題</p>
+</li>
+</ol>
+<p>下面來說一下從端午連假到今天為止的這一段故事，</p>
+<p>寫程式是這個故事很重要的一部份，</p>
+<p>不過其實還有很多其他眉眉角角可以跟大家分享。</p>
+<h1 id="在開始動手寫程式之前"><a href="#在開始動手寫程式之前" class="headerlink" title="在開始動手寫程式之前"></a>在開始動手寫程式之前</h1><p>在開發前，首要的認知就是知道：</p>
+<p>自己擅長什麼、手上有什麼資源，如果前兩者還不夠還要再準備什麼。</p>
+<p>其實有這個發想是在端午節之前，</p>
+<p>我平常是一個網頁前端工程師。</p>
+<blockquote>
+<p>雖然也寫寫後端以及對系統感興趣，</p>
+<p>但我知道 full stack 是一個被濫用的職稱。</p>
+<p>這年頭多的是 Database 操作只會 CRUD 的前端工程師稱自己為 full stack，</p>
+<p>或是只會套 bootstrap 的後端工程師稱自己為 full stack。</p>
+</blockquote>
+<p>最常用的語言剛好就是 JavaScript ，可以直接拿來寫 Chrome 的插件，</p>
+<p>但這還不夠，我還需要一個存放資料的 back-end。</p>
+<p>下面這個基本上就是我畫在紙上的草圖：</p>
+<p><img src="https://github.com/abalone0204/Clairvoyance/raw/master/clv-arc.png" alt="pic"></p>
+<p>本來打算直接在 AWS 上開一個 EC2+RDS 放著，</p>
+<p>後來發現只是單純留言，也沒有要真正 render 一個網頁。</p>
+<p>這個 back-end 需要能達到兩件事情：</p>
+<ol>
+<li><p>計算的能力</p>
+</li>
+<li><p>資料的持久性</p>
+</li>
+</ol>
+<p>首先是單純的運算能力，最終看上了 AWS 的另一個服務 AWS lambda，</p>
+<p>它是以 function 為單位，不會需要我去維護整台機器（serverless），</p>
+<p>而且當運算量變大時，我大 amazon 會自己幫我 scale-out。</p>
+<p>於是稍微研究了一下 serverless 這套 framework，</p>
+<p>也寫了一份筆記在這裡：</p>
+<ul>
+<li><a href="http://abalone0204.github.io/2016/05/22/serverless-simple-crud/" target="_blank" rel="external">淺析 serverless 架構與實作</a>。</li>
+</ul>
+<p>再來則是資料的持久性，我選擇了 DynamoDB，</p>
+<p>是個跟 lambda 搭配很常見的選擇。</p>
+<p>儘管它看起來就是簡單易用，</p>
+<p>但為了這個選擇其實下了不少功夫，</p>
+<p>一開始是因為對「最終一致性」有疑慮，所以去看了 CAP 理論：</p>
+<ul>
+<li><a href="http://www.julianbrowne.com/article/viewer/brewers-cap-theorem" target="_blank" rel="external">Brewer’s CAP Theorem</a></li>
+</ul>
+<p>後來再看了這本簡介分散式運算的書：</p>
+<ul>
+<li><a href="http://book.mixu.net/distsys/" target="_blank" rel="external">Distributed systems for fun and profit</a></li>
+</ul>
+<p>總歸對系統的架構有個理解後，才開始安心使用，</p>
+<p>儘管現在回頭看這兩份文本都可以跳過，</p>
+<p>但要做能 scale-out 的系統，</p>
+<p>對分散式運算如果一無所知的話，會沒有那個 sense，</p>
+<p>身為一個軟體人就不該對未知的東西姑息或害怕去學它。</p>
+<p>接著一切就緒後，我突然發現我少了一位設計師夥伴，</p>
+<p>基於不想在假日麻煩人，我上了 <a href="https://codepen.io" target="_blank" rel="external">codepen</a> 去看他們的 license：</p>
+<blockquote>
+<p>codepen 是一個讓前端工程師放作品的地方，上面有蠻多好玩的設計以及如何實做的原始碼。</p>
+<p>有人會問跟 pinterest 有什麼差別？</p>
+<p>簡言之 pinterest 是比較偏向純設計師的。</p>
+</blockquote>
+<ul>
+<li><a href="https://blog.codepen.io/legal/licensing/" target="_blank" rel="external">What License Is Code I Post to CodePen?</a></li>
+</ul>
+<p>簡單說一句話，就是 public pen 都是 MIT license 的，</p>
+<p>要使用的話，只要包含了他們原本的 license，就可以自由使用。</p>
+<p>雖然最後幾乎都只是參考概念，並沒有真正援用哪個 pen 上的東西，</p>
+<p>但身為一個軟體開發者，就應該遵守這些基本的規定，</p>
+<p>畢竟當真的有人要找你麻煩時，沒有不知者不罪這種事情。</p>
+<blockquote>
+<p>如果對於這些法規方面以及技術有興趣的人，</p>
+<p>可以去 follow Muzik Online 首席工程師 Ant 的臉書，</p>
+<p>上面有許多能讓技術人有一些法規 sense 的文章，</p>
+<p>而且對於 Database 和系統架構，上面也很多東西可以看。</p>
+</blockquote>
+<p>好了，現在我有：</p>
+<ul>
+<li><p>前端開發能力</p>
+</li>
+<li><p>back-end</p>
+</li>
+<li><p>codepen 上參考的 UI</p>
+</li>
+</ul>
+<p>再來只是需要時間就能把東西做出來了。</p>
+<h1 id="發布-Beta-版本"><a href="#發布-Beta-版本" class="headerlink" title="發布 Beta 版本"></a>發布 Beta 版本</h1><p>大家看到的版本，其實是有滿滿 bug 的 beta 版本，</p>
+<p>我只有讓身邊幾個朋友測試過，就先 po 在 soft_job 板上。</p>
+<blockquote>
+<p>讓開發者以外的人先測過這一步至關重要，</p>
+<p>因為自己開發的東西一定會有盲點。</p>
+</blockquote>
+<p>會這樣做的原因是因為我想知道這東西是不是真的有需求，</p>
+<p>當時 po 完文章就去睡覺，早上看到有三十推就覺得蠻開心，</p>
+<p>結果幾個小時候 TonyQ 將它轉到八卦版去，直接一個爆衝。</p>
+<p>但結局讓我又開心又害怕：</p>
+<ul>
+<li><p>開心的是這東西真的有需求，而且很有需求。</p>
+</li>
+<li><p>害怕的是我覺得這東西還不夠成熟，怕一開始太難用就直接被拋棄。</p>
+</li>
+</ul>
+<p>令我意外的是， aws lambda 和 DynamoDB 完全撐住了流量，</p>
+<p>當初把這些東西交到雲端託管有了成效，</p>
+<p>後來去看 log 發現沒辦法留言，都是原本 code 裡面有 bug，</p>
+<p>跟 AWS 一點關係都沒有 XD</p>
+<p>不過後續就一直修到昨天晚上為止，留言功能才算正式穩定下來。</p>
+<h1 id="收到回饋之後"><a href="#收到回饋之後" class="headerlink" title="收到回饋之後"></a>收到回饋之後</h1><p>接著除了大量的 bug 回報之外，</p>
+<p>也收到許多跟功能上有關的回饋。</p>
+<p>其實大部分的回饋我都認為做了功能絕對會更完善，</p>
+<p>但時間並不允許這樣做，</p>
+<p>所以問題並不在於「現在要做什麼」，而是「現在不做什麼」。</p>
+<blockquote>
+<p>這裡感謝 TonyQ 以及榮尼王給我的許多建議。</p>
+</blockquote>
+<p>因為背負著很多人的期待，我並不能想做什麼就亂做什麼，</p>
+<p>必須訂下一個明確開發的方向，</p>
+<p>就現階段而言，讓這個 extension 活下去是至關緊要的事情，</p>
+<p>因為已經有了第一批用戶（已註冊目前大概約四千多人），</p>
+<p>剩下的只是繼續累積。</p>
+<p>太激進、會讓人力銀行對這個 extension 採取行動的事情，</p>
+<p>都不該去做，因為目前還玩不起這個槓桿。</p>
+<blockquote>
+<p>不過 github 上面有許多人提了一些有辦法解決的方法，</p>
+<p>總之，沒有「絕對不做」的事情，只有「現階段不做」而已，</p>
+<p>有興趣的人也可以去看看，集思廣益：</p>
+<p><a href="https://github.com/abalone0204/Clairvoyance/issues" target="_blank" rel="external">Issue 討論區</a></p>
+</blockquote>
+<h1 id="商業化的迷思以及贊助管道"><a href="#商業化的迷思以及贊助管道" class="headerlink" title="商業化的迷思以及贊助管道"></a>商業化的迷思以及贊助管道</h1><p>有蠻多人在提到這件事情要商業化，</p>
+<p>也有人覺得只要「不商業化」就先把你貼上「傻傻、不懂事」的標籤。</p>
+<p>但其實我一點都不排斥商業化，我只是單純的覺得這件事不適合，</p>
+<p>或者現在沒想到適合的方式。</p>
+<p>像是如果要在上面硬是建立一個什麼商業模式，（像是廣告什麼的）</p>
+<p>這東西最後看起來只會是一個擾民的垃圾。</p>
+<p>而且當以獲利角度來做這些事情，</p>
+<p>我就不能單純站在勞工的角度去思考了。</p>
+<p>至於要永續經營，後續等真正穩定下來後，</p>
+<p>會放上小額捐款的連結，</p>
+<p>這件事會在擬定如何公布經費的使用以及規劃後才做，</p>
+<p>不在現在就先急著募錢的原因很簡單，</p>
+<p>因為我想讓捐錢的人真正弄清楚他們的錢為何所用，</p>
+<p>畢竟群眾募資不是大乞討，懂？</p>
+<h1 id="未來方向"><a href="#未來方向" class="headerlink" title="未來方向"></a>未來方向</h1><p>這裡不談功能，最終的希望就是所有的勞方都會是天眼通的用戶。</p>
+<p>因為大家並不是一年四季都在找工作，</p>
+<p>但大家卻是一年四季都能上去做評論，</p>
+<p>有時候並不是說一定要面試過或怎樣才能做評論，</p>
+<p>短期內，可以揭露一些根本沒必要去的職缺，</p>
+<p>長期下來，經驗的分享才是這個 extension 最難發揮價值的地方，</p>
+<p>「老馬識途」這種事情，在職場上也是適用的，</p>
+<p>總之，如何吸引大家去做這件事，就會是接下來的主要課題。</p>
+<h1 id="一個軟體工作者的反思"><a href="#一個軟體工作者的反思" class="headerlink" title="一個軟體工作者的反思"></a>一個軟體工作者的反思</h1><p>終於寫到這裡了，前幾天看到了 <a href="weekly.codetengu.com">Codetengu</a> 上分享了這篇文章：</p>
+<ul>
+<li><a href="http://groundbreaking.tw/wordpress/archives/2055" target="_blank" rel="external">此處有bug：程序員統治的黑暗世界</a></li>
+</ul>
+<p>我也想到前陣子 Alpha Go 很夯時，阮一峰所寫的文章：</p>
+<ul>
+<li><a href="http://www.ruanyifeng.com/blog/2016/03/techonology-vs-equality.html" target="_blank" rel="external">技术会带来社会平等吗？</a></li>
+</ul>
+<p>身為一個軟體開發者，能了解電腦能做到的就是大量自動化、去中介化，</p>
+<p>去取代掉那些機器可以取代的員工，</p>
+<p>企業為了達成這件事情，自然要雇用一堆軟體工程師來幫忙，</p>
+<p>所以軟體工作者也變成一個搶手的職業。</p>
+<p>所謂技術帶來的平等，是指「資訊上」的平等，</p>
+<p>我們的資訊流通因為網路和軟體越來越快，</p>
+<p>舉例像是：歐巴馬總統和我們一樣都能用 google 快速查東西。</p>
+<blockquote>
+<p>這年頭不知道還有沒有人記得百科全書這東西</p>
+</blockquote>
+<p>但在財富上卻不盡然，我們拿到越來越多薪水時，也讓越來越多的人失業，</p>
+<p>當此同時，除了繳了多一點點的稅，</p>
+<p>我們大多數人並沒有負起什麼社會責任。</p>
+<p>儘管軟體開發者理應是最有辦法讓想法付諸實現的人才對，</p>
+<p>畢竟軟體能夠運行在電腦這個已經稱霸全球的載體上，</p>
+<p>更別說我們還有了 Internet 這樣鋪天蓋地的通路，</p>
+<p>寫程式這件事雖然有時候我也會因為智商不夠用覺得好難，</p>
+<p>但是比起動不動要砸大錢的製造業，寫程式真的容易實現多了。</p>
+<p>寫程式是世界的潮流沒錯，</p>
+<p>只是許多台灣創業家提到寫程式就很喜歡強調矽谷如何、如何，</p>
+<p>忽略了許多在本質上就有顯著差異的事情。</p>
+<blockquote>
+<p>統計學裡面告訴我們：<strong>有顯著差異是要拒絕虛無假設的</strong>，這句話現在看來蠻有哲理。</p>
+</blockquote>
+<p>我不會說面對國際市場是一件錯誤的事情，</p>
+<p>在商言商總是有許多額外的考量，</p>
+<p>畢竟連話說的不好聽，要怎麼讓人掏錢投資勒？</p>
+<p>只是很多問題，其實台灣有其因應的解決方式，</p>
+<p>而工程師本來就該是提出 solution 的人，而不是負責說空話的人，</p>
+<p>所以更應該要虛心學習用一個台灣人的角度來看向世界以及台灣，</p>
+<p>才能真正解決台灣的問題。</p>
+<p>舉例來說：這個插件就是解決台灣特有的問題 XD，</p>
+<p>因為國外的求職平台沒有像台灣這樣被壟斷。</p>
+<p>中國那邊的招募平台也幾乎都有開放留言討論這個功能，</p>
+<p>資方跟勞方是積極在<del>爭論</del>對話的。</p>
+<p>所以這插件只有在這樣子的台灣才會有需求XD</p>
+<blockquote>
+<p>題外話是其實台灣也有蠻多新的求職平台，</p>
+<p>像是 <a href="https://sudo.com.tw/" target="_blank" rel="external">sudo</a>，</p>
+<p>或是 <a href="https://www.yourator.co/" target="_blank" rel="external">yourator</a>，</p>
+<p>都相當不錯，而且在資訊上也相對傳統的人力銀行透明很多，</p>
+<p>不過都是比較以新創或工程師為主。</p>
+<p>特別講到 sudo 是因為他們的留言功能更完整，</p>
+<p>（正因為以前就在那裡工作才更了解這些事情）</p>
+<p>裡面的就職顧問雖然是講話很愛中英交雜的 AIESECer，</p>
+<p>但絕對是真心要幫助工程師求職的：Ｄ</p>
+</blockquote>
+<p>再來雖然現代人生活離不開電腦，</p>
+<p>但其實對於軟體相關的事務都是有疏離和懼怕感的，</p>
+<p>很多時候是因為身為人與機器的 Proxy 的我們沒有做好事情讓其他人有感。</p>
+<p>身為一個在軟體產業工作的人，</p>
+<p>這件事可能會蠻常見的，就是你有時候很難跟不寫程式的人敘述你到底完成了一些什麼 XD</p>
+<p>舉例：</p>
+<ol>
+<li><p>把什麼東西做了 cache 讓它更快</p>
+</li>
+<li><p>或是用了什麼 Design Pattern 提高了維護性</p>
+</li>
+</ol>
+<p>別人聽一聽常常是：「喔⋯⋯這樣啊⋯⋯」。</p>
+<p>但生活中到處都是我們能夠付出專業能力去改變的地方，</p>
+<p>工作之餘，還要有生活，生活之餘，</p>
+<p>我們還能改善其他人的生活啊 :D</p>
+<p>當認為有正確的事情該做，</p>
+<p>就該運用系統化的角度去設計和解決，</p>
+<p>因為假如做出來不小心規模化，你的系統又扛得住的話，</p>
+<p>那可能就不小心改變世界了。</p>
+<blockquote>
+<p>題外話是天眼通本來是個我跟別人講，</p>
+<p>別人只會說：「喔～聽起來還不錯啊」的 Project。XDD</p>
+</blockquote>
+<p>再說我們身在這個年代，</p>
+<p>有各種雲端服務幫你搞定基礎建設（IaaS、SaaS、PaaS），</p>
+<p>還有各種框架幫你搞定 UI。</p>
+<p>基本上你只要有想法、計畫，再加上一段時間穩紮穩打的學習、練習，</p>
+<p>幾乎就能解開各種 Issue 了，</p>
+<p>不覺得很讚嗎？</p>
+<p>讚讚讚！</p>
+<ul>
+<li><p><a href="https://github.com/abalone0204/Clairvoyance" target="_blank" rel="external">github repo: Clairvoyance</a></p>
+</li>
+<li><p><a href="https://www.facebook.com/clairvoyance4job/" target="_blank" rel="external">facebook 粉絲專頁</a></p>
+</li>
+</ul>
+<p>也期許自己未來是真正的 RD 工程師，</p>
+<p>而不是出現 bug 只會 XD 的 XD 工程師：</p>
+<p><img src="http://i.imgur.com/lwFbW4l.jpg" alt="XD"></p>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><ul>
+<li><p><a href="http://abalone0204.github.io/2016/05/22/serverless-simple-crud/" target="_blank" rel="external">淺析 serverless 架構與實作</a></p>
+</li>
+<li><p><a href="http://www.julianbrowne.com/article/viewer/brewers-cap-theorem" target="_blank" rel="external">Brewer’s CAP Theorem</a></p>
+</li>
+<li><p><a href="http://book.mixu.net/distsys/" target="_blank" rel="external">Distributed systems for fun and profit</a></p>
+</li>
+<li><p><a href="http://www.ruanyifeng.com/blog/2016/03/techonology-vs-equality.html" target="_blank" rel="external">技术会带来社会平等吗？</a></p>
+</li>
+<li><p><a href="http://groundbreaking.tw/wordpress/archives/2055" target="_blank" rel="external">此處有bug：程序員統治的黑暗世界</a></p>
+</li>
+</ul>
+</div></article></div></section><footer><div class="paginator"><a href="/2016/07/11/eslint-fxcking-setup/" class="prev">PREV</a><a href="/2016/06/12/clv-dev-note/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'abalone0204';
+var disqus_identifier = '2016/06/16/clv-beta-version/';
+var disqus_title = '寫在 Clairvoyance 發布之後：軟體開發者的社會責任';
+var disqus_url = 'http://abalone0204.github.com/2016/06/16/clv-beta-version/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//abalone0204.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2016 <a href="http://abalone0204.github.com">Tsung-Chen Ku</a>, unless otherwise noted.</p></div></footer></div><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-76858432-1",'auto');ga('send','pageview');</script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5730240d682815d7"></script></body></html>
